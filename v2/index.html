@@ -3995,9 +3995,7 @@ function rebuildAll(){ buildGraph(); rebuildPins(); renderChips(); fillSelects()
     fly = {t0:performance.now() + 150, dur:3000, fp:st.clone(), ft:HOME.target.clone(), tp:homePos(), tt:HOME.target.clone()};
   }
   booted = true; requestAnimationFrame(tick); hidePanel();
-  let seen = false; try{ seen = sessionStorage.getItem('bfm-in') === '1'; }catch{}
-  if(passToday() && seen){ /* unlocked today and already welcomed this visit (e.g. after switching venue) */ }
-  else showLanding();
+  showLanding();   // every load and venue switch shows the welcome photo; the passcode is asked only if not entered today
   await loadData();
   applyKiosk(); if(KIOSK.on) hideLanding(true);
   defaultStops();
