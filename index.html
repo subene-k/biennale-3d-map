@@ -112,7 +112,7 @@ button{cursor:pointer}
 .panel.off{display:none!important}
 .menu-btn{position:absolute;z-index:5;left:max(16px,env(safe-area-inset-left,0px));top:calc(16px + env(safe-area-inset-top,0px));width:44px;height:44px;border-radius:50%;border:1px solid var(--glass-edge);background:var(--glass);-webkit-backdrop-filter:blur(18px) saturate(170%);backdrop-filter:blur(18px) saturate(170%);box-shadow:var(--shadow);color:var(--fg);display:grid;place-items:center;cursor:pointer}
 .menu-btn svg{width:20px;height:20px}
-#plMute,#resMute,.voice-note,.vstat,#plVoice{display:none!important}
+/* voice: only the sound button shows; it starts muted */
 .btnrow .btn.test-sound{display:none!important}
 .landing{position:fixed;inset:0;z-index:60;background:#1b120c;overflow:hidden;transition:opacity .7s ease}
 .landing.out{opacity:0;pointer-events:none}
@@ -1285,8 +1285,8 @@ function addFlag(x, y, z, ry, sc=1){
   pole.position.set(x, y + 8.5*sc, z); scene.add(pole);
   FLAG = {mesh:flag, base:geo.attributes.position.array.slice(), t:0};
 }
-const TREE_GREENS = [0x3FA34D, 0x56B95E, 0x74CB7E, 0x48B092, 0x2F8E4A, 0x8CCF55, 0x5FC2A0];   // leafy, mint and lime greens
-const CYPRESS_GREENS = [0x2E7D46, 0x3A8F52, 0x2A7340];
+const TREE_GREENS = [0x2E6B2F, 0x2F7A35, 0x24602B, 0x3A7D3A, 0x1F5527, 0x356F2C, 0x2A6A3C];   // deep foliage greens (neem, peepal, mango)
+const CYPRESS_GREENS = [0x1E5530, 0x24613A, 0x1A4A2A];
 function plantTrees(treePts, cypress=[]){
   treePts = treePts.filter(([x,z]) => inIsland(x,z,10)); cypress = cypress.filter(([x,z]) => inIsland(x,z,10));
   const cg = new THREE.IcosahedronGeometry(7,2), pos = cg.attributes.position;
@@ -2629,7 +2629,7 @@ $('#clearRoute').addEventListener('click', clearRoute);
    otherwise the browser's own speech engine. Sound is only switched off by the viewer, never silently. */
 const voice = { tts:null, synth:('speechSynthesis' in window) ? window.speechSynthesis : null, synthVoice:null, synthTok:0,
   denied:false, broken:false, muted:false, blocked:false, speaking:false, lastStart:0, ttsStalled:false };
-try{ voice.muted = localStorage.getItem('rf-muted') === '1'; }catch{}
+voice.muted = true;   // the guided walk starts muted; the sound button turns the voice on
 function pickSynthVoice(){
   try{ const vs = voice.synth.getVoices();
     voice.synthVoice = vs.find(v => /^en[-_]IN/i.test(v.lang)) || vs.find(v => /^en[-_]GB/i.test(v.lang)) || vs.find(v => /^en/i.test(v.lang)) || vs[0] || null;
@@ -2697,7 +2697,7 @@ function synthSpeak(text, lang='en'){
 function stopSpeech(){ voice.synthTok++; try{ voice.tts?.stop()?.catch?.(() => {}); }catch{} try{ voice.synth?.cancel(); }catch{} voice.speaking = false; }
 function pauseSpeech(){ try{ if(useTts()) voice.tts.pause()?.catch?.(() => {}); else voice.synth?.pause(); }catch{} }
 function resumeSpeech(){ try{ if(useTts()) voice.tts.resume()?.catch?.(() => {}); else voice.synth?.resume(); }catch{} }
-const VOICE_OFF = true;   // voice read-outs switched off for now (set to false to bring them back)
+const VOICE_OFF = false;   // set to true to remove the voice entirely
 function soundIsOn(){ return !VOICE_OFF && !voice.muted && !voice.blocked && canSpeak(); }
 function toggleSound(){
   if(soundIsOn()){
