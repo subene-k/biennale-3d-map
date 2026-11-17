@@ -793,7 +793,7 @@ const t="160",e={LEFT:0,MIDDLE:1,RIGHT:2,ROTATE:0,DOLLY:1,PAN:2},n={ROTATE:0,PAN
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
-import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { mergeGeometries, mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
 
 const $ = s => document.querySelector(s);
 
@@ -1362,28 +1362,77 @@ function addFlag(x, y, z, ry, sc=1){
   pole.position.set(x, y + 8.5*sc, z); scene.add(pole);
   FLAG = {mesh:flag, base:geo.attributes.position.array.slice(), t:0};
 }
-const TREE_GREENS = [0x2E6B2F, 0x2F7A35, 0x24602B, 0x3A7D3A, 0x1F5527, 0x356F2C, 0x2A6A3C];   // deep foliage greens (neem, peepal, mango)
-const CYPRESS_GREENS = [0x1E5530, 0x24613A, 0x1A4A2A];
+const TREE_GREENS = [0x3B6A2A, 0x46772F, 0x335F26, 0x50803A, 0x2C5422, 0x4A6E2C, 0x5A7F36, 0x3F7034, 0x2F5A2C];   // Delhi foliage: olive neem, deep mango, yellow-green peepal
+const CYPRESS_GREENS = [0x2A5A2C, 0x305F2E, 0x264F27];   // Ashoka (Polyalthia) columns
+/* Trees: broad, lumpy canopies built from clusters of soft leaf masses (darker underneath, sunlit on top), on tapered trunks with a fork */
+let TREE_KIT = null;
+function treeKit(){
+  if(TREE_KIT) return TREE_KIT;
+  const lumpy = (r, seed, sx=1, sy=1, sz=1) => {   // one leaf mass: a sphere pushed in and out by smooth noise
+    let g = new THREE.IcosahedronGeometry(r, LITE ? 2 : 3); g.deleteAttribute('uv'); g.deleteAttribute('normal'); g = mergeVertices(g);
+    const p = g.attributes.position, v = new THREE.Vector3();
+    for(let i=0;i<p.count;i++){ v.fromBufferAttribute(p,i); const n = v.clone().normalize();
+      const k = 1 + .16*Math.sin(n.x*5.1 + seed) * Math.cos(n.z*4.3 - seed*1.7) + .08*Math.sin(n.y*9 + n.x*7 + seed*2.3) + .025*Math.sin(n.z*13 + n.y*11 + seed);
+      v.multiplyScalar(k); v.x *= sx; v.y *= sy; v.z *= sz; p.setXYZ(i, v.x, v.y, v.z); }
+    return g;
+  };
+  const shade = (g, y0, y1) => {   // ambient-occlusion style colouring: deep green under the canopy, light on top and at the rim
+    const p = g.attributes.position, c = new Float32Array(p.count*3);
+    for(let i=0;i<p.count;i++){ const t = THREE.MathUtils.clamp((p.getY(i) - y0)/(y1 - y0), 0, 1), r = Math.hypot(p.getX(i), p.getZ(i));
+      const k = .52 + .62*Math.pow(t, .9) + .06*Math.min(1, r/9) + (Math.sin(i*12.9898)*43758.5 % 1)*.06;
+      c[i*3] = k*.98; c[i*3+1] = k; c[i*3+2] = k*.9; }
+    g.setAttribute('color', new THREE.BufferAttribute(c, 3)); g.computeVertexNormals(); return g;
+  };
+  const crowns = [];
+  for(let v=0; v<4; v++){   // four canopy shapes so neighbouring trees don't look cloned
+    const parts = [], n = 5 + v;
+    parts.push(lumpy(5.2 + v*.3, v*3.1, 1.05, .78, 1).translate(0, 1.2, 0));
+    for(let k=0;k<n;k++){ const a = k/n*Math.PI*2 + v, d = 3.6 + (k%3)*.9, r = 3.0 + ((k*7+v)%4)*.45;
+      parts.push(lumpy(r, k*1.7 + v, 1, .82, 1).translate(Math.cos(a)*d, .2 + ((k+v)%3)*1.1, Math.sin(a)*d)); }
+    parts.push(lumpy(3.4, v+9, 1, .9, 1).translate(.6, 4.0, -.4));
+    let g = mergeGeometries(parts); g = mergeVertices(g);
+    const p = g.attributes.position; for(let i=0;i<p.count;i++) if(p.getY(i) < -2.2) p.setY(i, -2.2 + (p.getY(i) + 2.2)*.35);   // flatter underside
+    crowns.push(shade(g, -2.6, 7.5));
+  }
+  // trunk with a fork into two limbs
+  const t0 = new THREE.CylinderGeometry(.45, .85, 6.4, 7).translate(0, 3.2, 0);
+  const t1 = new THREE.CylinderGeometry(.32, .55, 4, 6).translate(0, 2, 0).rotateZ(.5).translate(.2, 5.8, 0);
+  const t2 = new THREE.CylinderGeometry(.3, .5, 3.6, 6).translate(0, 1.8, 0).rotateZ(-.55).rotateY(1.2).translate(-.1, 5.6, .1);
+  const trunk = mergeGeometries([t0, t1, t2].map(g => { g.deleteAttribute('uv'); return g; }));
+  // Ashoka tree: tall narrow drooping column
+  const col = shade(lumpy(2.4, 4.2, 1, 3.4, 1), -7.5, 7.5);
+  const leafMat = new THREE.MeshStandardMaterial({color:0xffffff, vertexColors:true, roughness:.95, metalness:0});
+  leafMat.onBeforeCompile = sh => {   // leaf clumps: light and dark speckle in world space so every canopy reads as foliage, not a smooth blob
+    sh.vertexShader = 'varying vec3 vLW;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n  vec4 lw = vec4(transformed, 1.0);\n  #ifdef USE_INSTANCING\n  lw = instanceMatrix * lw;\n  #endif\n  vLW = (modelMatrix * lw).xyz;');
+    sh.fragmentShader = 'varying vec3 vLW;\nfloat lH(vec3 p){ p = fract(p*.3183099 + .1); p *= 17.0; return fract(p.x*p.y*p.z*(p.x+p.y+p.z)); }\nfloat lN(vec3 x){ vec3 i = floor(x), f = fract(x); f = f*f*(3.0-2.0*f); return mix(mix(mix(lH(i),lH(i+vec3(1,0,0)),f.x),mix(lH(i+vec3(0,1,0)),lH(i+vec3(1,1,0)),f.x),f.y),mix(mix(lH(i+vec3(0,0,1)),lH(i+vec3(1,0,1)),f.x),mix(lH(i+vec3(0,1,1)),lH(i+vec3(1,1,1)),f.x),f.y),f.z); }\n'
+      + sh.fragmentShader.replace('#include <color_fragment>', '#include <color_fragment>\n  float ln = lN(vLW*.85)*.6 + lN(vLW*2.3 + 7.0)*.4;\n  diffuseColor.rgb *= .78 + .42*ln;\n  diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb*vec3(1.08,1.06,.86), smoothstep(.62,.9,ln));');
+  };
+  leafMat.customProgramCacheKey = () => 'leafVary';
+  const barkMat = new THREE.MeshStandardMaterial({color:0x5b4632, roughness:1});
+  return TREE_KIT = {crowns, trunk, col, leafMat, barkMat};
+}
 function plantTrees(treePts, cypress=[]){
   treePts = treePts.filter(([x,z]) => inIsland(x,z,10)); cypress = cypress.filter(([x,z]) => inIsland(x,z,10));
-  const cg = new THREE.IcosahedronGeometry(7,2), pos = cg.attributes.position;
-  for(let i=0;i<pos.count;i++){ const v = new THREE.Vector3().fromBufferAttribute(pos,i); v.multiplyScalar(.93 + rnd()*.1); v.y *= .9; pos.setXYZ(i, v.x, v.y, v.z); }
-  cg.computeVertexNormals();
-  const crown = new THREE.InstancedMesh(cg, M.tree, Math.max(1, treePts.length));
-  const trunk = new THREE.InstancedMesh(new THREE.CylinderGeometry(.8,1.2,6,6), M.trunk, Math.max(1, treePts.length + cypress.length));
-  const cyp = new THREE.InstancedMesh(new THREE.ConeGeometry(2.3,13,8), M.tree, Math.max(1, cypress.length));
-  crown.count = treePts.length; trunk.count = treePts.length + cypress.length; cyp.count = cypress.length;
-  const o = new THREE.Object3D(), col = new THREE.Color();
-  treePts.forEach(([x,z,s],i) => {
-    o.position.set(x,3*s,z); o.scale.setScalar(s); o.rotation.set(0,0,0); o.updateMatrix(); trunk.setMatrixAt(i,o.matrix);
-    o.position.set(x,9.5*s,z); o.rotation.y = i; o.updateMatrix(); crown.setMatrixAt(i,o.matrix);
-    col.set(TREE_GREENS[Math.floor(rnd()*TREE_GREENS.length)]).multiplyScalar(.92 + rnd()*.16); crown.setColorAt(i, col);
+  const K = treeKit(), o = new THREE.Object3D(), c = new THREE.Color(), meshes = [];
+  const groups = K.crowns.map(() => []); treePts.forEach((t, i) => groups[i % K.crowns.length].push(t));
+  const trunk = new THREE.InstancedMesh(K.trunk, K.barkMat, Math.max(1, treePts.length + cypress.length)); trunk.count = treePts.length + cypress.length; meshes.push(trunk);
+  let ti = 0;
+  groups.forEach((list, v) => {
+    const crown = new THREE.InstancedMesh(K.crowns[v], K.leafMat, Math.max(1, list.length)); crown.count = list.length; meshes.push(crown);
+    list.forEach(([x,z,s=1], i) => {
+      const ry = rnd()*Math.PI*2, sh = s*(.9 + rnd()*.25), w = .9 + rnd()*.25;
+      o.rotation.set(0, ry, 0); o.position.set(x, 0, z); o.scale.set(s, sh, s); o.updateMatrix(); trunk.setMatrixAt(ti++, o.matrix);
+      o.position.set(x, 8.6*sh, z); o.scale.set(s*w, sh*(.85 + rnd()*.25), s*w*(.9 + rnd()*.2)); o.updateMatrix(); crown.setMatrixAt(i, o.matrix);
+      c.set(TREE_GREENS[Math.floor(rnd()*TREE_GREENS.length)]).multiplyScalar(.9 + rnd()*.2); crown.setColorAt(i, c);
+    });
   });
-  cypress.forEach(([x,z],i) => {
-    o.rotation.set(0,0,0); o.scale.setScalar(1); o.position.set(x,1.5,z); o.updateMatrix(); trunk.setMatrixAt(treePts.length+i, o.matrix);
-    o.position.set(x,8,z); o.updateMatrix(); cyp.setMatrixAt(i,o.matrix); col.set(CYPRESS_GREENS[i % CYPRESS_GREENS.length]).multiplyScalar(.9 + rnd()*.15); cyp.setColorAt(i,col);
+  const cyp = new THREE.InstancedMesh(K.col, K.leafMat, Math.max(1, cypress.length)); cyp.count = cypress.length; meshes.push(cyp);
+  cypress.forEach(([x,z], i) => {
+    o.rotation.set(0, rnd()*6.28, 0); o.scale.set(.6, .5, .6); o.position.set(x, 0, z); o.updateMatrix(); trunk.setMatrixAt(ti++, o.matrix);
+    o.scale.set(1, .95 + rnd()*.15, 1); o.position.set(x, 9.2, z); o.updateMatrix(); cyp.setMatrixAt(i, o.matrix);
+    c.set(CYPRESS_GREENS[i % CYPRESS_GREENS.length]).multiplyScalar(.9 + rnd()*.15); cyp.setColorAt(i, c);
   });
-  for(const m of [crown,trunk,cyp]){ m.castShadow = true; m.receiveShadow = true; scene.add(m); }
+  for(const m of meshes){ m.castShadow = true; m.receiveShadow = true; scene.add(m); }
 }
 const scatterInto = (list, cx,cz,w,d,n, avoid=() => false) => { for(let i=0;i<n;i++){ const x = cx-w/2+rnd()*w, z = cz-d/2+rnd()*d; if(!avoid(x,z)) list.push([x, z, .8+rnd()*.5]); } };
 const CTX = [];
