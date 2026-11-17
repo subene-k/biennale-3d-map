@@ -116,7 +116,9 @@ button{cursor:pointer}
   text-shadow:0 0 6px var(--sky),0 0 2px var(--sky)}
 
 /* ---------- map controls ---------- */
-.ctl{position:absolute;z-index:6;top:calc(16px + env(safe-area-inset-top,0px));right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:8px}
+.ctl{position:absolute;z-index:6;top:calc(16px + env(safe-area-inset-top,0px));right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.ctl .modes button{width:auto;height:auto;display:block;border-top:0;padding:7px 14px}
+.ctl .modes button:hover{background:var(--panel-2)}.ctl .modes button[aria-checked="true"],.ctl .modes button[aria-checked="true"]:hover{background:var(--fg);color:var(--bg)}
 .ctl .grp{display:flex;flex-direction:column;background:var(--panel);border-radius:10px;box-shadow:var(--shadow);overflow:hidden}
 .ctl button{width:40px;height:40px;border:0;background:transparent;display:grid;place-items:center;color:var(--fg)}
 .ctl button+button{border-top:1px solid var(--line)}
@@ -506,7 +508,7 @@ body.kiosk .search{padding:13px 14px;font-size:16px}
 body.kiosk .ctl button,body.kiosk .compass{width:54px;height:54px}
 body.kiosk .chip,body.kiosk .seg button{padding:8px 14px;font-size:14.5px}
 body.kiosk .lang button{padding:8px 14px;font-size:14px}
-body.kiosk .modes button{padding:11px 20px;font-size:15px}
+body.kiosk .ctl .modes button{padding:11px 20px;font-size:15px}
 body.kiosk .pin .dot{width:34px;height:34px;left:-17px}
 body.kiosk .pin .dot svg{width:18px;height:18px}
 body.kiosk .ext{display:none!important}
@@ -523,6 +525,10 @@ body.kiosk .ext{display:none!important}
     <button class="compass" id="compass" title="Face north" aria-label="Face north">
       <svg viewBox="0 0 26 26" aria-hidden="true"><path d="M13 3 17 13H9Z" fill="var(--accent)"/><path d="M13 23 9 13h8Z" fill="var(--muted)"/><text x="13" y="11.5" text-anchor="middle" font-size="5" font-weight="700" fill="#fff" font-family="Inter,sans-serif">N</text></svg>
     </button>
+    <div class="modes" role="radiogroup" aria-label="Map view">
+      <button type="button" role="radio" aria-checked="true" data-mode="map">3D map</button>
+      <button type="button" role="radio" aria-checked="false" data-mode="eye">360° view</button>
+    </div>
     <div class="grp">
       <button id="zin" title="Zoom in" aria-label="Zoom in"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
       <button id="zout" title="Zoom out" aria-label="Zoom out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
@@ -542,10 +548,6 @@ body.kiosk .ext{display:none!important}
   <div id="pcard" class="pcard" hidden role="dialog" aria-live="polite"></div>
 
   <div class="topc">
-    <div class="modes" role="radiogroup" aria-label="Map view">
-      <button type="button" role="radio" aria-checked="true" data-mode="map">3D map</button>
-      <button type="button" role="radio" aria-checked="false" data-mode="eye">360° view</button>
-    </div>
     <div class="card2 placebar" id="placebar" hidden>
       <button class="icon lg" id="pPrev" type="button" aria-label="Previous place"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"/></svg></button>
       <div class="pb-t"><small id="pSub"></small><b id="pName"></b><p id="pDesc"></p></div>
@@ -4228,7 +4230,7 @@ function rebuildAll(){ buildGraph(); rebuildPins(); renderChips(); fillSelects()
   initVoice();
   window.claude?.use?.('downloads').then(d => { DL = d; }).catch(() => {});
   if(document.querySelector('link[rel="manifest"]') && 'serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
-  if(location.search.includes('rfdebug')) window.__rf = {scene, goEye, setMode, eyeZoom, startWalk, standPoint, get walk(){ return walk; }, get eye(){ return eye; }, camera, controls, walker, get fly(){ return fly; }, set fly(v){ fly = v; }, DOORS, setWalkView, pose, live,
+  if(location.search.includes('rfdebug')) window.__rf = {scene, exportPts: () => pois.map(p => { const g = geoLocal([p.x, p.z]); const [lat, lng] = toLatLng(g[0], g[1]); return {id:p.id, name:p.name, name_hi:p.name_hi||'', cat:p.cat, catLabel:CATS[p.cat]?.label||p.cat, num:p.num||'', staff:!!p.staff, x:p.x, z:p.z, lat, lng}; }), goEye, setMode, eyeZoom, startWalk, standPoint, get walk(){ return walk; }, get eye(){ return eye; }, camera, controls, walker, get fly(){ return fly; }, set fly(v){ fly = v; }, DOORS, setWalkView, pose, live,
     setLang, kioskReset, openStreet, closeStreet, openAdmin, renderExhibits, statsReport, get pois(){ return pois; }, get stops(){ return stops; }, KIOSK, visited, toLocal, toLatLng, setTab, WT, wtFindPath, wtGoHotspot, wtBuild, get mode(){ return mode; }};
 })();
 </script>
