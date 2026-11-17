@@ -2618,7 +2618,6 @@ function selectPoi(id, fly_=false){
   const mk = (txt,cls,fn) => { const b = document.createElement('button'); b.type='button'; b.className='btn '+cls; b.textContent = txt; b.addEventListener('click', fn); row.appendChild(b); };
   const from = startId();
   mk(T('Open 360° view'),'', () => { setMode('eye'); goEye(p.id, false); });
-  mk(T('Walk here in 3D'),'', () => wtWalkHere(p.id));
   mk(T('Show on map'),'', () => { setMode('map'); flyTo(p.x,p.z,300); });
   mk(visited.has(p.id) ? '✓ ' + T('Visited') : T('Mark as visited'),'', () => { setVisited(p.id, !visited.has(p.id)); selectPoi(p.id); });
   d.appendChild(row);
@@ -2641,7 +2640,6 @@ function showCard(id){
   const mk = (txt, cls, fn) => { const b = document.createElement('button'); b.type = 'button'; if(cls) b.className = cls; b.textContent = txt; b.addEventListener('click', fn); row.appendChild(b); };
   mk(T('Directions'), 'pri', () => { hideCard(); const from = startId(); const s0 = from && p.id !== from ? from : (visPois().find(q => q.id !== p.id)?.id); stops = [s0, p.id]; setTab('route'); renderStops(); doRoute(); });
   mk(T('Open 360° view'), '', () => { hideCard(); setMode('eye'); goEye(p.id, false); });
-  mk(T('Walk here in 3D'), '', () => { hideCard(); wtWalkHere(p.id); });
   mk(T('More details'), '', () => { hideCard(); selectPoi(p.id, false); });
   c.appendChild(row); c.hidden = false; track('view', id); placeCard();
 }
@@ -3112,6 +3110,7 @@ function checkSpeech(now){
 }
 function startWalk(view='map'){
   if(!routeCurve || !routeSeq.length) return;
+  if(WT.path || WT.play){ WT.play = false; WT.path = null; wtRibbonClear(); wtOpen(false); }
   const pl = $('#planner'); if($('#player').parentElement !== pl) pl.prepend($('#player'));   // the walk controls live in the side panel, in place of the directions
   pl.classList.add('walking'); showPanel(); panel.classList.remove('collapsed');
   if(voice.speaking) stopSpeech();
@@ -3158,7 +3157,7 @@ function finishWalk(){
   track('walk_done', null, {stops:routeSeq.length});
   updatePlayerButtons();
 }
-function endWalk(){ if(!walk.active) return; $('#planner').classList.remove('walking'); eye.chase = false; walk.active = false; walk.state = 'idle'; walk.token++; stopSpeech(); hidePano(); eye.glide = null; $('#player').hidden = true; const re = $('#resEnd'); if(re) re.hidden = true; refreshPinStates(); }
+function endWalk(){ if(!walk.active) return; $('#planner').classList.remove('walking'); const was3d = mode === 'eye' && eye.chase; eye.chase = false; if(was3d) setTimeout(() => { if(!walk.active && mode === 'eye'){ setMode('map'); modeBtns('map'); } }, 0); walk.active = false; walk.state = 'idle'; walk.token++; stopSpeech(); hidePano(); eye.glide = null; $('#player').hidden = true; const re = $('#resEnd'); if(re) re.hidden = true; refreshPinStates(); }
 function stepWalk(now, dt){
   const gliding = mode === 'eye' && !!eye.glide;
   if(walk.state === 'moving' && !walk.paused && !gliding){
