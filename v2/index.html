@@ -152,7 +152,15 @@ button{cursor:pointer}
 .ld-logos img{display:block;height:30px;width:auto;object-fit:contain}
 .ld-logos .lg-iso{height:28px;mix-blend-mode:multiply}
 .ld-logos .lg-ka{height:44px;width:44px;margin:-6px 0;border-radius:50%}
-@media (max-width:900px){.ld-logos{top:calc(16px + env(safe-area-inset-top,0px));bottom:auto;right:16px;gap:12px;padding:8px 12px}.ld-logos img{height:22px}.ld-logos .lg-iso{height:20px}.ld-logos .lg-ka{height:32px;width:32px;margin:-4px 0}}
+@media (max-width:900px){   /* phones and portrait tablets: logos sit in a strip under the button, clear of the photo's flag and towers */
+  .ld-logos{top:auto;bottom:calc(14px + env(safe-area-inset-bottom,0px));left:0;right:0;margin:0 auto;width:max-content;transform:none;gap:14px;padding:7px 14px;border-radius:12px;max-width:calc(100% - 28px)}
+  .ld-logos img{height:22px}.ld-logos .lg-iso{height:20px}.ld-logos .lg-ka{height:32px;width:32px;margin:-5px 0}
+  .ld-card{bottom:calc(76px + env(safe-area-inset-bottom,0px))}}
+@media (max-width:560px){.ld-go{font-size:15px;padding:13px 20px}.ld-go span{display:none}.ld-pass input{flex:1 1 100%}}
+@media (max-height:500px) and (orientation:landscape){   /* phones held sideways */
+  .ld-card h2{font-size:30px}.ld-sub{margin:4px 0 10px}.ld-hi{font-size:16px}
+  .ld-logos{top:auto;bottom:calc(12px + env(safe-area-inset-bottom,0px));left:auto;right:16px;margin:0}
+  .ld-card{bottom:calc(14px + env(safe-area-inset-bottom,0px));right:auto;max-width:56%}}
 @keyframes ldShake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
 body.ld-on .pin,body.ld-on .ctx,body.ld-on .topc,body.ld-on .ctl,body.ld-on .menu-btn,body.ld-on .osm-attr,body.ld-on .leftc{visibility:hidden}
 .ld-credit{position:absolute;z-index:2;right:12px;bottom:10px;font-size:11px;color:rgba(255,255,255,.85);text-decoration:none;text-shadow:0 1px 4px rgba(0,0,0,.6)}
@@ -2215,14 +2223,37 @@ function flyTo(x, z, dist, y=0){
   const toP = toT.clone().add(curDir.normalize().multiplyScalar(d));
   fly = {t0:performance.now(), dur:850, fp:camera.position.clone(), ft:controls.target.clone(), tp:toP, tt:toT};
 }
+/* Tall (portrait) screens: look along the fort's long axis and fit the whole wall on screen, instead of shrinking the landscape view */
+let HOME_T = null;
+function portraitHome(a){
+  const P = VENUE.poly; if(!P?.length) return null;
+  const cx = P.reduce((s,q) => s+q[0], 0)/P.length, cz = P.reduce((s,q) => s+q[1], 0)/P.length;
+  let sxx = 0, szz = 0, sxz = 0; for(const [x,z] of P){ sxx += (x-cx)**2; szz += (z-cz)**2; sxz += (x-cx)*(z-cz); }
+  const ang = .5*Math.atan2(2*sxz, sxx - szz); let u = new THREE.Vector2(Math.cos(ang), Math.sin(ang));
+  const d0 = new THREE.Vector2(HOME.pos.x - HOME.target.x, HOME.pos.z - HOME.target.z).normalize(); if(u.dot(d0) < 0) u.negate();
+  const cam = new THREE.PerspectiveCamera(camera.fov, a, 1, 20000), pol = .92, t = new THREE.Vector3(cx, 0, cz), v = new THREE.Vector3();
+  const pts = P.flatMap(([x,z]) => [new THREE.Vector3(x,0,z), new THREE.Vector3(x,22,z)]);
+  let D = 800;
+  for(let it=0; it<6; it++){
+    cam.position.set(t.x + u.x*Math.sin(pol)*D, Math.cos(pol)*D, t.z + u.y*Math.sin(pol)*D); cam.lookAt(t); cam.updateMatrixWorld(); cam.updateProjectionMatrix();
+    let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9; for(const q of pts){ v.copy(q).project(cam); x0 = Math.min(x0, v.x); x1 = Math.max(x1, v.x); y0 = Math.min(y0, v.y); y1 = Math.max(y1, v.y); }
+    const need = Math.max((x1 - x0)/2/.86, (y1 - y0)/2/.70); D *= need;
+    const my = (y0 + y1)/2 - .04; t.x -= u.x*my*D*.55; t.z -= u.y*my*D*.55;   // centre the fort a little below the top controls
+  }
+  cam.position.set(t.x + u.x*Math.sin(pol)*D, Math.cos(pol)*D, t.z + u.y*Math.sin(pol)*D);
+  return {pos:cam.position.clone(), target:t.clone()};
+}
+const homeTgt = () => (HOME_T || HOME.target).clone();
 const homePos = () => {
+  HOME_T = null;
+  { const a = mapEl.clientWidth / Math.max(1, mapEl.clientHeight); if(a < .85){ const h = portraitHome(a); if(h){ HOME_T = h.target; return h.pos; } } }
   let k;
   if(VENUE.home.aspect){   // keep the reference framing side to side in any window: pull back as the window gets narrower than the reference shape
     const a = mapEl.clientWidth / Math.max(1, mapEl.clientHeight);
     k = THREE.MathUtils.clamp(.78 * VENUE.home.aspect / a, 1, 3);   // the fort spans ~70% of the width in the reference: keep it filling ~90% in narrower windows
   } else { const narrow = mapEl.clientWidth < 760; k = narrow ? Math.min(2.3, 1.2 * 760 / Math.max(320, mapEl.clientWidth)) : 1; }
   return HOME.target.clone().add(HOME.pos.clone().sub(HOME.target).multiplyScalar(k)); };
-function flyHome(){ fly = {t0:performance.now(), dur:900, fp:camera.position.clone(), ft:controls.target.clone(), tp:homePos(), tt:HOME.target.clone()}; topBtn.setAttribute('aria-pressed','false'); }
+function flyHome(){ fly = {t0:performance.now(), dur:900, fp:camera.position.clone(), ft:controls.target.clone(), tp:homePos(), tt:homeTgt()}; topBtn.setAttribute('aria-pressed','false'); }
 const topBtn = $('#topview');
 topBtn.addEventListener('click', () => {
   closeStreet();
@@ -4038,7 +4069,7 @@ function hideLanding(instant){
   if(instant){ el.hidden = true; return; }
   el.classList.add('out'); setTimeout(() => { el.hidden = true; }, 750);
   { const g = gateView(); camera.position.copy(g.pos); controls.target.copy(g.target);   // start at the gate, whatever moved the camera meanwhile
-    fly = {t0:performance.now() + 200, dur:reduceMotion ? 1 : 3600, fp:g.pos, ft:g.target, tp:homePos(), tt:HOME.target.clone()}; }
+    fly = {t0:performance.now() + 200, dur:reduceMotion ? 1 : 3600, fp:g.pos, ft:g.target, tp:homePos(), tt:homeTgt()}; }
   track('enter');
 }
 /* Passcode for the map. Only a salted SHA-256 hash is kept here, never the code itself. This is a soft gate for visitors:
@@ -4087,11 +4118,11 @@ function rebuildAll(){ buildGraph(); rebuildPins(); renderChips(); fillSelects()
   if(!LOCKED_VENUE) addEventListener('hashchange', () => { const k = location.hash.slice(1); if(VENUES[k] && k !== VENUE.key && !dirty) location.reload(); });
   scene.traverse(o => { if(!o.material || live.clouds?.includes(o)) return; for(const m of [].concat(o.material)) if(!m.userData.noClip) m.clippingPlanes = ISLAND_CLIP; });
   panel.classList.add('compact'); if(matchMedia('(max-width:760px)').matches) panel.classList.add('collapsed'); guideLabel();
-  applyTheme(); layout(); camera.position.copy(homePos()); controls.update();
+  applyTheme(); layout(); camera.position.copy(homePos()); controls.target.copy(homeTgt()); controls.update();
   if(!reduceMotion){   // opening: sweep in from high above and round to the side, settling on the overview
-    const off = homePos().sub(HOME.target), a = .85, st = new THREE.Vector3(off.x*Math.cos(a) - off.z*Math.sin(a), off.y, off.x*Math.sin(a) + off.z*Math.cos(a)).multiplyScalar(2.1).add(HOME.target);
+    const off = homePos().sub(homeTgt()), a = .85, st = new THREE.Vector3(off.x*Math.cos(a) - off.z*Math.sin(a), off.y, off.x*Math.sin(a) + off.z*Math.cos(a)).multiplyScalar(2.1).add(homeTgt());
     st.y = Math.max(st.y, 1500); camera.position.copy(st); controls.update();
-    fly = {t0:performance.now() + 150, dur:3000, fp:st.clone(), ft:HOME.target.clone(), tp:homePos(), tt:HOME.target.clone()};
+    fly = {t0:performance.now() + 150, dur:3000, fp:st.clone(), ft:homeTgt(), tp:homePos(), tt:homeTgt()};
   }
   booted = true; requestAnimationFrame(tick); hidePanel();
   showLanding();   // every load and venue switch shows the welcome photo; the passcode is asked only if not entered today
