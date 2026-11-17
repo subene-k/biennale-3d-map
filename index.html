@@ -538,7 +538,7 @@ body.kiosk .search{padding:13px 14px;font-size:16px}
 body.kiosk .ctl button,body.kiosk .compass{width:54px;height:54px}
 body.kiosk .chip,body.kiosk .seg button{padding:8px 14px;font-size:14.5px}
 body.kiosk .lang button{padding:8px 14px;font-size:14px}
-body.kiosk .ctl .modes button{padding:11px 20px;font-size:15px}
+body.kiosk .ctl .modes button{width:auto;height:auto;padding:11px 20px;font-size:15px}
 body.kiosk .pin .dot{width:34px;height:34px;left:-17px}
 body.kiosk .pin .dot svg{width:18px;height:18px}
 body.kiosk .ext{display:none!important}
@@ -3401,7 +3401,8 @@ function setMode(m){
 /* Aerial view: high above the fort, north up, the whole walled site and its surroundings in frame. "3D map" returns to the usual opening view. */
 const modeBtns = m => document.querySelectorAll('.modes button').forEach(b => b.setAttribute('aria-checked', String(b.dataset.mode === m)));
 function aerialView(){
-  const P = VENUE.poly || [[0,0]], cx = P.reduce((s,q) => s+q[0], 0)/P.length, cz = P.reduce((s,q) => s+q[1], 0)/P.length;
+  let P = VENUE.poly || [[0,0]]; const cx = P.reduce((s,q) => s+q[0], 0)/P.length, cz = P.reduce((s,q) => s+q[1], 0)/P.length;
+  { const h = kioskHere() && byId(kioskHere()); if(h) P = [...P, [h.x + 30, h.z + 30], [h.x - 30, h.z - 30]]; }   // keep the kiosk's You are here in frame
   const a = mapEl.clientWidth / Math.max(1, mapEl.clientHeight), th = Math.tan(THREE.MathUtils.degToRad(camera.fov/2)), pol = .2;   // a slight tilt keeps walls and buildings readable as 3D
   // screen-up direction: north on wide screens; along the fort's length on tall (portrait) screens so it fills the phone
   let up = new THREE.Vector2(0, -1);
@@ -3943,6 +3944,7 @@ function showAttract(){
 function hideAttract(lang){
   $('#attract').hidden = true; controls.autoRotate = false; lastAct = performance.now();
   setLang(lang || LANG); track('session');
+  if(KIOSK.on) goAerial();   // back to north-up after the welcome screen's slow turn
   if(KIOSK.on && !document.fullscreenElement) document.documentElement.requestFullscreen?.().catch(() => {});
 }
 document.querySelectorAll('#attract [data-start]').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); hideAttract(b.dataset.start); }));
@@ -3962,7 +3964,7 @@ function kioskReset(){
   clearRoute(); visited.clear(); saveVisited(); youAt = null;
   $('#q').value = ''; $('#xq').value = ''; xFilter = 'all'; catSel = null; zoomedIn = false; syncCats();
   selectedId = null; $('#detail').hidden = true; $('#exploreList').hidden = false; $('#toast').hidden = true;
-  defaultStops(); setLang('en'); renderChips(); renderList(); renderStops(); setTab('explore'); hideCard(); setCompact(true); flyHome(); showAttract();
+  defaultStops(); setLang('en'); renderChips(); renderList(); renderStops(); setTab('explore'); hideCard(); setCompact(true); goAerial(); showAttract();
 }
 // staff dialog: long-press the logo for 2 seconds, or press Ctrl+Shift+K
 function openAdmin(){
@@ -4391,7 +4393,7 @@ function rebuildAll(){ buildGraph(); rebuildPins(); renderChips(); fillSelects()
   applyKiosk(); if(KIOSK.on) hideLanding(true);
   defaultStops();
   rebuildAll();
-  if(KIOSK.on) showAttract(); else track('session');
+  if(KIOSK.on){ goAerial(true); showAttract(); } else track('session');   // kiosks open in the aerial view, with their You are here in sight
   initManage();
   if(!VOICE_OFF) initVoice();
   window.claude?.use?.('downloads').then(d => { DL = d; }).catch(() => {});
