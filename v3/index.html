@@ -103,6 +103,19 @@ button{cursor:pointer}
 .pin .name .nm-x{display:none;position:absolute;top:6px;right:6px;width:26px;height:26px;border:0;border-radius:50%;background:rgba(255,255,255,.95);color:#222;font:600 18px/26px var(--f-body);text-align:center;padding:0;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.25);z-index:2}
 .pin .name .nm-x:hover{background:#fff;transform:scale(1.08)}
 .pin.sel .name .nm-x{display:block}
+@media (max-width:760px){
+  .pin .name.has-ph{width:204px;max-width:204px}.pin .name .nm-ph{height:100px}
+  body:has(.panel:not(.off)) .pin .name{display:none}   /* the details sheet already shows the place: no signboard over the controls */
+  .panel:not(.collapsed):has(#detail:not([hidden])){height:min(64%,600px)}   /* room for a place's photo, text and directions */
+  .panel:not(.collapsed):has(.planner.walking){height:min(46%,420px)}         /* while walking: just the walk controls, the map stays visible */
+}
+body:has(#player:not([hidden])) #wtbar{display:none}
+@media (max-height:500px) and (orientation:landscape){   /* phones held sideways: compact panel and signboards */
+  .panel #brandSub,.panel .guide-tog{display:none}
+  .panel .venues button{padding:5px 8px}
+  .pin .name.has-ph{width:180px;max-width:180px}.pin .name .nm-ph{height:72px}.pin .name.has-ph .nm-t{font-size:13px}
+  body:has(.panel:not(.off)) .pin .name{display:none}
+}
 .pin .name:not(.has-ph) .nm-cat{padding-right:26px}
 .pin.sel .name,.pin:focus-within .name{opacity:1;transform:translate(-50%,0);pointer-events:auto}
 @media (hover:hover){.pin:hover .name{opacity:1;transform:translate(-50%,0);pointer-events:auto}.pin:hover .name .nm-go{display:block}.pin .name:hover{box-shadow:0 8px 22px rgba(0,0,0,.3)}}
@@ -162,6 +175,17 @@ button{cursor:pointer}
 .ld-pass input:focus{border-color:#fff;background:rgba(255,255,255,.24)}
 .ld-err{margin:10px 0 0;font-size:14px;font-weight:600;color:#ffd7cc;text-shadow:0 1px 6px rgba(0,0,0,.5)}
 .ld-shake{animation:ldShake .35s}
+.planner{display:flex;flex-direction:column;gap:10px}
+.detail .planner{margin:14px 0 6px;padding-top:12px;border-top:1px solid var(--line)}
+.planner .pl-route{display:flex;flex-direction:column;gap:10px}
+.planner.walking .pl-route{display:none}
+.planner #player{margin:0}
+.stoplist li.locked .k{background:var(--route)}
+.stoplist li.locked .fixed{flex:1;min-width:0;padding:8px 10px;border-radius:8px;background:var(--panel-2);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stoplist li.locked .fixed small{display:block;font-weight:500;font-size:11px;color:var(--route)}
+.stoplist li.locked .grip{visibility:hidden}
+.stoplist .icon.plus{color:var(--route)}
+.stoplist select.empty{color:var(--muted)}
 .klist{display:flex;flex-direction:column;gap:8px}
 .krow{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:6px;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--panel-2)}
 .krow.here{border-color:var(--route);box-shadow:0 0 0 2px color-mix(in srgb,var(--route) 25%,transparent)}
@@ -573,9 +597,8 @@ body.kiosk .ext{display:none!important}
       <div><img id="plImg" class="plimg" alt="" hidden><small id="plStatus"></small><b id="plName"></b><p id="plDesc" hidden></p><span class="vstat" id="plVoice"></span></div>
       <div class="pl-b">
         <div class="wviews" role="group" aria-label="Walk view">
-          <button type="button" data-wv="map" aria-pressed="true" title="Watch from above">Map</button>
-          <button type="button" data-wv="behind" aria-pressed="false" title="Walk behind the guide">Follow</button>
-          <button type="button" data-wv="eyes" aria-pressed="false" title="See what the guide sees">Eyes</button>
+          <button type="button" data-wv="map" aria-pressed="true" title="Watch from above">2D</button>
+          <button type="button" data-wv="behind" aria-pressed="false" title="Walk behind the guide">3D</button>
         </div>
         <button class="sound" id="plSpeed" type="button" title="Walking speed" aria-label="Walking speed">1×</button>
         <button class="icon lg" id="plPlay" type="button" aria-label="Pause walk"></button>
@@ -592,7 +615,7 @@ body.kiosk .ext{display:none!important}
     <button class="handle" id="handle" type="button" aria-label="Expand or collapse panel"></button>
     <div class="brand">
       <div class="mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"><path d="M3 21V11h3v-2h2v2h8V9h2v2h3v10Z"/><path d="M10 21v-5a2 2 0 0 1 4 0v5"/><path d="M12 4c1.5 1 1.5 3 0 4-1.5-1-1.5-3 0-4Z"/></svg></div>
-      <div><h1 id="venueName">Red Fort · Lal Qila</h1><p id="brandSub">The India Biennale ’26 · 4 Dec 2026 – 21 Mar 2027</p></div>
+      <div><h1 id="venueName">Red Fort · Lal Qila</h1><p id="brandSub">The India Biennale 2026 · 4 Dec 26 – 21 Mar 27</p></div>
       <div class="lang" role="group" aria-label="Language"><button type="button" data-lang="en" aria-pressed="true" lang="en">EN</button><button type="button" data-lang="hi" aria-pressed="false" lang="hi">हिन्दी</button></div><button class="p-x" id="panelX" type="button" aria-label="Hide panel" title="Hide">×</button>
     </div>
     <div class="venues" role="group" aria-label="Venue">
@@ -637,14 +660,19 @@ body.kiosk .ext{display:none!important}
     <section class="body info" id="tab-info" hidden><div id="infoBody" style="display:flex;flex-direction:column;gap:4px"></div></section>
 
     <section class="body" id="tab-route" hidden>
-      <div class="stophead"><b>My stops</b><span class="hint" id="stopCount"></span></div>
+      <div id="planner" class="planner">
+      <div class="pl-route">
+      <div class="stophead"><b>Directions</b><span class="hint" id="stopCount"></span></div>
       <ol class="stoplist" id="stops" aria-label="Stops in visiting order"></ol>
-      <p class="hint">Tap places on the map to add them, or use “Add stop”. Stop 1 is where you start.</p>
-      <div class="btnrow"><button class="btn" id="addStop" type="button">+ Add stop</button><button class="btn" id="resetStops" type="button">Clear stops</button><button class="btn" id="myLoc" type="button" hidden>Use my location</button></div>
+      <div class="btnrow" hidden><button class="btn" id="addStop" type="button">+ Add stop</button><button class="btn" id="resetStops" type="button">Clear stops</button><button class="btn" id="myLoc" type="button" hidden>Use my location</button></div>
+      <div class="pl-opts" id="plOpts" hidden>
       <label class="check"><input type="checkbox" id="optOrder" checked> Find the shortest order</label>
       <label class="check" style="margin-top:-6px"><input type="checkbox" id="keepEnd"> Keep my last stop last</label>
-      <div class="btnrow"><button class="btn route" id="goRoute" type="button">Show route</button><button class="btn" id="clearRoute" type="button">Hide route</button></div>
+      </div>
+      <div class="btnrow" hidden><button class="btn route" id="goRoute" type="button">Show route</button><button class="btn" id="clearRoute" type="button">Hide route</button></div>
       <div class="result" id="result" hidden></div>
+      </div>
+      </div>
       <div class="divider"></div>
       <div style="display:flex;flex-direction:column;gap:8px">
         <b style="font-family:var(--f-display);font-size:16px">Visit every place</b>
@@ -893,7 +921,7 @@ const CAT_ORDER = ['gate','monument','museum','garden','biennale','facility'];
 const WALK_M_PER_MIN = 70;
 
 /* Hindi interface text, keyed by the English text. */
-const HI = {'View details':'विवरण देखें', 'Photo':'फ़ोटो', 
+const HI = {'View details':'विवरण देखें', 'Walk in 2D':'2D में सैर', 'Walk in 3D':'3D में सैर', 'Choose a place…':'कोई जगह चुनें…', 'Choose where you start…':'शुरुआत की जगह चुनें…', 'Add a stop':'पड़ाव जोड़ें', 'Watch the walk from above':'ऊपर से सैर देखें', 'Walk behind the guide at ground level':'ज़मीन पर गाइड के पीछे चलें', 'Photo':'फ़ोटो', 
   'Explore places, exhibits & directions':'स्थान, प्रदर्शनियाँ और रास्ते देखें', 'Hide list':'सूची छिपाएँ', 'More details':'पूरी जानकारी', 'Close':'बंद करें',
   // categories and map symbols
   'Gates':'द्वार', 'Gate':'द्वार', 'Palaces & monuments':'महल और स्मारक', 'Monument':'स्मारक', 'Museums':'संग्रहालय', 'Museum':'संग्रहालय',
@@ -913,7 +941,7 @@ const HI = {'View details':'विवरण देखें', 'Photo':'फ़ो
   'Walk view':'सैर का दृश्य', 'Map':'नक़्शा', 'Follow':'पीछे-पीछे', 'Eyes':'आँखों से', 'Watch from above':'ऊपर से देखें', 'Walk behind the guide':'गाइड के पीछे चलें',
   'See what the guide sees':'गाइड जो देखता है, वह देखें', 'Walking speed':'चलने की गति', 'Pause walk':'सैर रोकें', 'Resume walk':'सैर जारी रखें', 'Walk again':'फिर से सैर करें',
   'Skip to next stop':'अगले पड़ाव पर जाएँ', 'Sound':'आवाज़', 'Follow the walk':'सैर के साथ चलें', 'End guided walk':'निर्देशित सैर समाप्त करें',
-  'Expand or collapse panel':'पैनल खोलें या बंद करें', 'The India Biennale ’26 · 4 Dec 2026 – 21 Mar 2027':'द इंडिया बिएनाले ’26 · 4 दिसंबर 2026 – 21 मार्च 2027',
+  'Expand or collapse panel':'पैनल खोलें या बंद करें', 'The India Biennale 2026 · 4 Dec 26 – 21 Mar 27':'द इंडिया बिएनाले 2026 · 4 दिसं 26 – 21 मार्च 27',
   'Venue':'स्थल', 'Red Fort':'लाल क़िला', 'Purana Qila':'पुराना क़िला', 'Explore':'खोजें', 'Exhibits':'प्रदर्शनियाँ', 'Directions':'रास्ता', 'Info':'जानकारी',
   'Search places':'स्थान खोजें', 'Drag the map to rotate it, pinch or scroll to zoom.':'नक़्शा घुमाने के लिए खींचें, ज़ूम के लिए पिंच या स्क्रॉल करें।',
   'Search exhibits or artists':'प्रदर्शनी या कलाकार खोजें', 'Show':'दिखाएँ', 'All':'सभी', 'To visit':'देखना बाकी', 'Visited':'देख लिया', 'Highlights':'मुख्य आकर्षण', 'Highlight':'मुख्य आकर्षण',
@@ -2202,7 +2230,7 @@ function rebuildPins(){
   buildProjections();
   refreshPinStates();
 }
-let selectedId = null;
+let selectedId = null, plannerFor = null;   // plannerFor: the place whose details last set up the directions
 let routeIds = null; // array of poi ids in the current route
 let shownOrder = null; // sequence of stop ids currently drawn
 function refreshPinStates(){
@@ -2493,6 +2521,7 @@ function setTab(t){
   tab = t;
   for(const b of document.querySelectorAll('.tabs button')) b.setAttribute('aria-selected', String(b.dataset.tab === t));
   for(const k of ['explore','exhibits','route','info','manage']) $('#tab-'+k).hidden = t !== k;
+  if(t === 'route' && $('#planner').parentElement !== $('#tab-route')) $('#tab-route').prepend($('#planner'));
   if(t !== 'manage') stopPlacing();
   if(t === 'exhibits'){ renderExhibits(); track('tab', 'exhibits'); }
   if(t === 'info'){ renderInfo(); track('tab', 'info'); }
@@ -2578,11 +2607,16 @@ function selectPoi(id, fly_=false){
       im.onerror = () => { im.remove(); cr?.remove(); }; } }
   if(pf(p,'note')){ const n = document.createElement('div'); n.className='note'; const b = document.createElement('b'); b.textContent = T('At the Biennale'); n.append(b, document.createTextNode(pf(p,'note'))); d.appendChild(n); }
   if(editorMode && p.check){ const c = document.createElement('p'); c.className = 'check-note'; c.textContent = 'To check: ' + p.check; d.appendChild(c); }
+  // directions from this place (or from the kiosk) right under its description
+  if(plannerFor !== p.id && !walk.active){
+    plannerFor = p.id; lastWasTour = false;
+    const kh = kioskLock(); stops = kh ? (kh === p.id ? [kh, ''] : [kh, p.id]) : [p.id, ''];
+    renderStops(); if(stops.filter(id => byId(id)).length >= 2) doRoute(false); else clearRoute();
+  }
+  d.appendChild($('#planner'));
   const row = document.createElement('div'); row.className='btnrow'; row.style.marginTop='14px';
   const mk = (txt,cls,fn) => { const b = document.createElement('button'); b.type='button'; b.className='btn '+cls; b.textContent = txt; b.addEventListener('click', fn); row.appendChild(b); };
-  mk(stops.includes(p.id) ? T('Already in my stops') : T('Add to my stops'),'route', () => { setTab('route'); addStop(p.id); });
   const from = startId();
-  mk(kioskHere() ? T('Directions from here') : T('Directions from entrance'),'', () => { const s0 = from && p.id !== from ? from : (visPois().find(q => q.id !== p.id)?.id); stops = [s0, p.id]; setTab('route'); renderStops(); doRoute(); });
   mk(T('Open 360° view'),'', () => { setMode('eye'); goEye(p.id, false); });
   mk(T('Walk here in 3D'),'', () => wtWalkHere(p.id));
   mk(T('Show on map'),'', () => { setMode('map'); flyTo(p.x,p.z,300); });
@@ -2636,7 +2670,7 @@ function onPinClick(id){
   // first tap: zoom in on the icon and show its signboard; tapping the signboard opens the side panel
   if(!preZoom) preZoom = {p:camera.position.clone(), t:controls.target.clone()};   // the view to go back to when the signboard is closed
   selectedId = id; refreshPinStates(); track('view', id);
-  const p = byId(id); if(p){ const d = camera.position.distanceTo(controls.target); flyTo(p.x, p.z, Math.max(controls.minDistance + 20, Math.min(d, 230)), pinHeight(p) * .9); }   // aim at the icon itself so its signboard has room above it
+  const p = byId(id); if(p){ const d = camera.position.distanceTo(controls.target); flyTo(p.x, p.z, Math.max(controls.minDistance + 20, Math.min(d, 230)), pinHeight(p) * .9 + (mapEl.clientWidth < 760 ? 22 : 0)); }   // aim at the icon itself (a little above it on phones) so its signboard has room above it
 }
 let hoverPinId = null, preZoom = null;
 function zoomBack(){ if(!preZoom) return; fly = {t0:performance.now(), dur:850, fp:camera.position.clone(), ft:controls.target.clone(), tp:preZoom.p.clone(), tt:preZoom.t.clone()}; preZoom = null; }
@@ -2680,12 +2714,22 @@ function defaultStops(){
   const h = kioskHere(); if(h){ stops = [h, ...stops.filter(id => id !== h)]; }
   if(stops.length < 2) stops = visPois().slice(0,2).map(p => p.id);
 }
+const kioskLock = () => kioskHere();   // a kiosk device always starts routes at the kiosk; that first stop can't be changed
 function renderStops(){
-  stops = stops.filter(id => byId(id));
+  stops = stops.filter(id => id === '' || byId(id));
+  const kh = kioskLock(); if(kh && stops[0] !== kh) stops = [kh, ...stops.filter(id => id !== kh)];
+  while(stops.length < 2) stops.push('');   // always at least a start and a destination
   const ol = $('#stops'); ol.textContent = '';
-  if(!stops.length){ const li = document.createElement('li'); li.className = 'empty'; li.style.display = 'block'; li.textContent = T('No stops yet. Tap places on the map or use “Add stop”.'); ol.appendChild(li); }
   stops.forEach((id,i) => {
     const li = document.createElement('li'); li.dataset.id = id;
+    if(i === 0 && kh && id === kh){   // fixed kiosk start
+      li.classList.add('locked');
+      const g = document.createElement('span'); g.className = 'grip';
+      const k = document.createElement('span'); k.className = 'k'; k.textContent = 1;
+      const f = document.createElement('div'); f.className = 'fixed'; f.textContent = pName(byId(id)); const sm = document.createElement('small'); sm.textContent = T('You are here'); f.appendChild(sm);
+      const acts = document.createElement('div'); acts.className = 'acts';
+      li.append(g, k, f, acts); ol.appendChild(li); return;
+    }
     const grip = document.createElement('button'); grip.type = 'button'; grip.className = 'grip'; grip.innerHTML = ICONS.grip; grip.title = T('Drag to reorder');
     grip.setAttribute('aria-label', T('Move stop {n}, {p}. Drag it, or use the up and down arrow keys.', {n:i+1, p:pName(byId(id))}));
     grip.addEventListener('keydown', e => {
@@ -2697,14 +2741,22 @@ function renderStops(){
     grip.addEventListener('pointerdown', e => startDrag(e, li));
     const k = document.createElement('span'); k.className = 'k'; k.textContent = i+1;
     const sel = document.createElement('select'); sel.id = 'stop-'+i; sel.setAttribute('aria-label', T('Stop {n}', {n:i+1})); poiOptions(sel, id);
-    sel.addEventListener('change', () => { stops[i] = sel.value; stopsChanged(); });
+    if(kh) sel.querySelector(`option[value="${kh}"]`)?.remove();
+    if(!id){ const o = new Option(T(i === 0 ? 'Choose where you start…' : 'Choose a place…'), ''); sel.prepend(o); sel.value = ''; sel.classList.add('empty'); }
+    sel.addEventListener('change', () => {
+      const dup = sel.value && stops.findIndex((x, j) => x === sel.value && j !== i);
+      if(sel.value && dup >= 0){ toast(T('{p} is already stop {n}', {p:pName(byId(sel.value)), n:dup+1})); sel.value = stops[i] || ''; return; }
+      stops[i] = sel.value; stopsChanged(); });
     const acts = document.createElement('div'); acts.className = 'acts';
     const ic = (name, label, disabled, fn) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'icon'; b.innerHTML = ICONS[name]; b.title = label; b.setAttribute('aria-label', `${label} (${T('Stop {n}', {n:i+1})})`); b.disabled = disabled; b.addEventListener('click', fn); acts.appendChild(b); };
-    ic('x',T('Remove'), false, () => { stops.splice(i,1); stopsChanged(); });
+    ic('x',T('Remove'), false, () => { if(stops.length > 2) stops.splice(i,1); else stops[i] = ''; stopsChanged(); });
+    if(i === stops.length - 1){ const pl = document.createElement('button'); pl.type = 'button'; pl.className = 'icon plus'; pl.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';
+      pl.title = T('Add a stop'); pl.setAttribute('aria-label', T('Add a stop')); pl.addEventListener('click', () => { stops.push(''); renderStops(); ol.querySelector('li:last-child select')?.focus(); }); acts.appendChild(pl); }
     li.append(grip, k, sel, acts); ol.appendChild(li);
   });
-  $('#stopCount').textContent = stops.length === 1 ? T('1 stop') : T('{n} stops', {n:stops.length});
-  $('#goRoute').disabled = stops.length < 2;
+  const nValid = stops.filter(id => byId(id)).length; $('#plOpts').hidden = nValid < 3;
+  $('#stopCount').textContent = nValid < 2 ? '' : T('{n} stops', {n:nValid});
+  $('#goRoute').disabled = nValid < 2;
   refreshPinStates();
 }
 function manualOrder(){
@@ -2734,13 +2786,14 @@ function startDrag(e, li){
   grip.addEventListener('pointermove', move); grip.addEventListener('pointerup', up); grip.addEventListener('pointercancel', up);
 }
 let lastWasTour = false;
-function stopsChanged(){ renderStops(); if(!$('#result').hidden && !lastWasTour && stops.length >= 2) doRoute(false); else if(stops.length < 2 && !lastWasTour) clearRoute(); }
+function stopsChanged(){ renderStops(); lastWasTour = false; if(stops.filter(id => byId(id)).length >= 2) doRoute(false); else clearRoute(); }
 function addStop(id){
   const p = byId(id); if(!p) return;
   if(stops.includes(id)){ toast(T('{p} is already stop {n}', {p:pName(p), n:stops.indexOf(id)+1})); return; }
-  stops.push(id); renderStops(); expandSheet();
-  toast(T('Added {p} as stop {n}', {p:pName(p), n:stops.length}));
-  if(stops.length >= 2 && (!$('#result').hidden || stops.length === 2)) doRoute(false);
+  const e = stops.indexOf(''); if(e >= 0) stops[e] = id; else stops.push(id);
+  renderStops(); expandSheet();
+  toast(T('Added {p} as stop {n}', {p:pName(p), n:stops.indexOf(id)+1}));
+  if(stops.filter(x => byId(x)).length >= 2){ lastWasTour = false; doRoute(false); }
 }
 $('#addStop').addEventListener('click', () => {
   const next = sortedPois().find(p => !stops.includes(p.id) && p.cat !== 'facility') || sortedPois().find(p => !stops.includes(p.id));
@@ -2792,7 +2845,7 @@ function doRoute(fit=true){
   if($('#optOrder').checked && seq.length > 2){
     const before = seq.join();
     seq = optimizeOrder(seq, d, $('#keepEnd').checked);
-    if(seq.join() !== before){ stops = seq.slice(); renderStops(); }
+    if(seq.join() !== before){ stops = [...seq, ...stops.filter(id => !id)]; renderStops(); }
   }
   const legs = [], legLen = [];
   for(let i=0;i<seq.length-1;i++){
@@ -2858,14 +2911,16 @@ function showResult({title, dist, steps, tour}){
   }
   if(routeCurve){
     const row = document.createElement('div'); row.className='btnrow';
-    const pb = document.createElement('button'); pb.type='button'; pb.className='btn route'; pb.textContent = T('Start guided walk');
-    pb.addEventListener('click', startWalk);
+    const pb = document.createElement('button'); pb.type='button'; pb.className='btn route'; pb.textContent = T('Walk in 2D');
+    pb.title = T('Watch the walk from above'); pb.addEventListener('click', () => startWalk('map'));
+    const p3 = document.createElement('button'); p3.type='button'; p3.className='btn route'; p3.textContent = T('Walk in 3D');
+    p3.title = T('Walk behind the guide at ground level'); p3.addEventListener('click', () => startWalk('behind'));
     const eb = document.createElement('button'); eb.type='button'; eb.className='btn danger'; eb.id = 'resEnd'; eb.textContent = T('End guided walk'); eb.hidden = !walk.active; eb.addEventListener('click', endWalk);
     const mb = document.createElement('button'); mb.type='button'; mb.className='btn'; mb.id = 'resMute';
     mb.addEventListener('click', toggleSound);
     const tb = document.createElement('button'); tb.type='button'; tb.className='btn test-sound'; tb.textContent = T('Test sound');
     tb.addEventListener('click', testSound);
-    row.append(pb, wtRouteBtn(), eb); if(!VOICE_OFF) row.append(mb, tb); r.appendChild(row);
+    row.append(pb, p3, eb); if(!VOICE_OFF) row.append(mb, tb); r.appendChild(row);
     const note = document.createElement('p'); note.className = 'hint voice-note'; note.id = 'voiceNote';
     note.textContent = VOICE_OFF ? T('The guided walk moves along your route and shows each stop’s name and description when it gets there.') : T('The guided walk moves along your route and reads out each stop’s name and description when it gets there.');
     r.appendChild(note);
@@ -3055,15 +3110,19 @@ function checkSpeech(now){
   }
   if(el > walk.readMs + 30000){ walk.state = 'dwell'; walk.resumeAt = now; }
 }
-function startWalk(){
+function startWalk(view='map'){
   if(!routeCurve || !routeSeq.length) return;
+  const pl = $('#planner'); if($('#player').parentElement !== pl) pl.prepend($('#player'));   // the walk controls live in the side panel, in place of the directions
+  pl.classList.add('walking'); showPanel(); panel.classList.remove('collapsed');
   if(voice.speaking) stopSpeech();
   walk.active = true; walk.paused = false; walk.follow = true; walk.token++; walk.t = 0; eye.glide = null;
   if(voice.blocked) voice.blocked = false;          // this click counts as a fresh tap
   $('#player').hidden = false; track('walk', null, {stops:routeSeq.length});
-  if(matchMedia('(max-width:760px)').matches) panel.classList.add('collapsed');
-  if(mode === 'map'){ const p = routeCurve.getPointAt(0); flyTo(p.x, p.z, 360); }
-  arriveAt(0); updatePlayerButtons();
+  if(view === 'map'){ if(mode === 'eye') setWalkView('map'); const p = routeCurve.getPointAt(0); flyTo(p.x, p.z, 360); }
+  arriveAt(0);
+  if(view === 'behind') setWalkView('behind');
+  updatePlayerButtons();
+  requestAnimationFrame(() => $('#player').scrollIntoView({block:'nearest', behavior:'auto'}));
 }
 function arriveAt(i){
   const id = routeSeq[i], p = byId(id); if(!p){ finishWalk(); return; }
@@ -3099,7 +3158,7 @@ function finishWalk(){
   track('walk_done', null, {stops:routeSeq.length});
   updatePlayerButtons();
 }
-function endWalk(){ if(!walk.active) return; eye.chase = false; walk.active = false; walk.state = 'idle'; walk.token++; stopSpeech(); hidePano(); eye.glide = null; $('#player').hidden = true; const re = $('#resEnd'); if(re) re.hidden = true; refreshPinStates(); }
+function endWalk(){ if(!walk.active) return; $('#planner').classList.remove('walking'); eye.chase = false; walk.active = false; walk.state = 'idle'; walk.token++; stopSpeech(); hidePano(); eye.glide = null; $('#player').hidden = true; const re = $('#resEnd'); if(re) re.hidden = true; refreshPinStates(); }
 function stepWalk(now, dt){
   const gliding = mode === 'eye' && !!eye.glide;
   if(walk.state === 'moving' && !walk.paused && !gliding){
@@ -3129,7 +3188,7 @@ function stepWalk(now, dt){
   }
 }
 $('#plPlay').addEventListener('click', () => {
-  if(walk.state === 'done'){ startWalk(); return; }
+  if(walk.state === 'done'){ startWalk(mode === 'eye' ? 'behind' : 'map'); return; }
   walk.paused = !walk.paused;
   if(walk.paused){ pauseSpeech(); walk.pausedAt = performance.now(); }
   else { resumeSpeech(); const held = performance.now() - (walk.pausedAt || performance.now()); walk.t0 = (walk.t0 || 0) + held; if(walk.state === 'dwell') walk.resumeAt = Math.min(walk.resumeAt + held, performance.now() + 600); }
@@ -3618,7 +3677,7 @@ function planHighlights(){
   setTab('route'); renderStops(); doRoute(true); return !!routeCurve;
 }
 $('#xTour').addEventListener('click', () => { if(planHighlights()) track('highlights'); });
-$('#xVirtual').addEventListener('click', () => { if(!planHighlights()) return; track('walkthrough'); startWalk(); setWalkView('eyes'); });
+$('#xVirtual').addEventListener('click', () => { if(!planHighlights()) return; track('walkthrough'); startWalk('behind'); });
 
 function renderInfo(){
   const b = $('#infoBody'); b.textContent = '';
