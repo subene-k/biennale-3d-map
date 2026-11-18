@@ -176,8 +176,8 @@
   },
   {
    "id": "swiss",
-   "name": "Swiss Embassy",
-   "name_hi": "Swiss Embassy",
+   "name": "36 Positions by Navid Tschopp (The Embassy of Switzerland in India and Bhutan)",
+   "name_hi": "नवीद चॉप द्वारा '36 पोजीशन्स' (भारत और भूटान में स्विट्जरलैंड का दूतावास)",
    "cat": "biennale",
    "lat": 28.609276,
    "lng": 77.2440631,
@@ -285,7 +285,7 @@
   },
   {
    "id": "dag",
-   "name": "Anant: A Rare 18th Century Mahabharata Scroll (DAG)",
+   "name": "Anant: A Rare 18th Century Mahabharata Scroll",
    "name_hi": "Anant: A Rare 18th Century Mahabharata Scroll",
    "cat": "biennale",
    "lat": 28.6107578,
