@@ -362,8 +362,8 @@
   },
   {
    "id": "pati",
-   "name": "Pati",
-   "name_hi": "Pati",
+   "name": "Through Me Runs the Ancient Water",
+   "name_hi": "मुझमें से होकर प्राचीन जल बहता है",
    "cat": "biennale",
    "lat": 28.6090039,
    "lng": 77.2424607,
@@ -373,7 +373,10 @@
    "note_hi": "",
    "num": "14",
    "check": "Latitude was given as 20.6090035; corrected to 28.6090035.",
-   "staff": true
+   "staff": true,
+   "icon": "spark",
+   "artist": "Kaimurai (Abishek Ganesh)",
+   "photo": "/media/purana-qila/pati-photo-mwm22g44.jpg"
   },
   {
    "id": "jsw",
