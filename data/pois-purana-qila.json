@@ -343,7 +343,8 @@
    "icon": "spark",
    "artist": "Students",
    "photo": "/media/purana-qila/student-ardee-photo-mwm1rfx6.jpg",
-   "pano": "/media/purana-qila/student-ardee-pano-mwm1u5wn.jpg"
+   "pano": "/media/purana-qila/student-ardee-pano-mwm1u5wn.jpg",
+   "staff": true
   },
   {
    "id": "pav-states",
