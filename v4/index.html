@@ -450,7 +450,7 @@ body:has(#player:not([hidden])) #placebar{display:none}
 .xitem.done .xs{color:var(--ok)}
 .tick{width:16px;height:16px}
 .vis-badge{display:inline-flex;gap:5px;align-items:center;font-size:12px;font-weight:600;color:var(--ok);background:color-mix(in srgb,var(--ok) 14%,var(--panel));border-radius:999px;padding:3px 9px}
-.artist{font-size:13.5px;color:var(--muted);margin:-2px 0 0}
+.artist{font-size:14px;line-height:1.45;color:var(--fg);margin:-2px 0 0}.artist b{font-weight:700}.detail p.desc{font-size:13.5px;line-height:1.55}
 .artist+.artist{margin-top:2px}
 .exnum{font:600 11px/1 var(--f-mono);letter-spacing:.06em;color:var(--c-biennale);background:color-mix(in srgb,var(--c-biennale) 12%,var(--panel));border-radius:6px;padding:4px 6px;margin-left:6px}
 .check-note{font-size:12px;color:var(--warn);margin-top:8px}
@@ -2792,7 +2792,7 @@ let selectedId = null, plannerFor = null;   // plannerFor: the place whose detai
 let routeIds = null; // array of poi ids in the current route
 let shownOrder = null; // sequence of stop ids currently drawn
 function refreshPinStates(){
-  const order = shownOrder || (tab === 'route' ? stops : null);
+  const order = shownOrder || (tab === 'route' && stops.filter(id => byId(id)).length >= 2 ? stops : null);
   for(const [id,o] of pinObjs){
     const el = o.element; el.classList.toggle('sel', id === selectedId); if(id === selectedId) loadSignPhoto(el);
     const idx = order ? order.indexOf(id) : -1;
@@ -3160,9 +3160,8 @@ function selectPoi(id, fly_=false){
     if(visited.has(p.id)){ const v = document.createElement('span'); v.className = 'vis-badge'; v.style.marginLeft = '6px'; v.textContent = '✓ ' + T('Visited'); cl.appendChild(v); } }
   const h = document.createElement('h2'); h.textContent = pName(p);
   d.append(back, cl, h);
-  if(p.artist){ const a = document.createElement('p'); a.className = 'artist'; a.textContent = T('Artist: {a}', {a:p.artist}); d.appendChild(a); }
-  for(const [k, lab] of [['curator','Curator: {a}'], ['organiser','Organiser: {a}']]) if(pf(p, k)){ const a = document.createElement('p'); a.className = 'artist'; a.textContent = T(lab, {a:pf(p, k)}); d.appendChild(a); }
-  const desc = document.createElement('p'); desc.textContent = pf(p,'desc'); d.appendChild(desc);
+  for(const [k, lab] of [['artist','Artist: {a}'], ['curator','Curator: {a}'], ['organiser','Organiser: {a}']]) if(k === 'artist' ? p.artist : pf(p, k)){ const a = document.createElement('p'); a.className = 'artist'; const lb = document.createElement('b'); lb.textContent = T(lab, {a:''}).trim(); a.append(lb, document.createTextNode(' ' + (k === 'artist' ? p.artist : pf(p, k)))); d.appendChild(a); }
+  const desc = document.createElement('p'); desc.className = 'desc'; desc.textContent = pf(p,'desc'); d.appendChild(desc);
   { const ph = photoOf(p); if(ph){ const im = document.createElement('img'); im.className = 'photo'; im.alt = pName(p); im.loading = 'lazy'; im.src = ph.d || ph.u; d.insertBefore(im, cl);
       let cr = null; if(ph.a){ cr = document.createElement('a'); cr.className = 'ph-credit'; cr.href = 'https://commons.wikimedia.org/wiki/File:' + ph.f; cr.target = '_blank'; cr.rel = 'noopener'; cr.textContent = photoCredit(ph); d.insertBefore(cr, cl); }
       im.onerror = () => { im.remove(); cr?.remove(); }; } }
