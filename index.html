@@ -1028,12 +1028,12 @@ let dirty = false;
 let fileSha = undefined;
 async function loadData(){
   try{
-    const r = await fetch(VENUE.file, {cache:'no-store'});
+    const r = await fetch((/\/v\d+\//.test(location.pathname) ? '../' : '') + 'data/' + VENUE.file, {cache:'no-store'});
     if(!r.ok) throw 0;
     saved = await r.json();
   }catch{ try{ saved = JSON.parse(document.getElementById(VENUE.fallback).textContent); }catch{ saved = {pois:[]}; } }
   if(GEO) for(const p of saved.pois || []){
-    if(Number.isFinite(+p.lat) && Number.isFinite(+p.lng) && p.lat !== '' && p.lng !== ''){ [p.x, p.z] = toLocal(+p.lat, +p.lng); }
+    if(Number.isFinite(+p.lat) && Number.isFinite(+p.lng) && p.lat !== '' && p.lng !== ''){ [p.x, p.z] = saved.real ? modelFromLatLng(+p.lat, +p.lng) : toLocal(+p.lat, +p.lng); }   // real: true = true map coordinates (data files from the admin page)
     else if(Number.isFinite(p.x)){ [p.lat, p.lng] = toLatLng(p.x, p.z); }
   }
   INFO = structuredClone(saved.info || DEFAULT_INFO);
@@ -4407,7 +4407,7 @@ function rebuildAll(){ buildGraph(); rebuildPins(); renderChips(); fillSelects()
   if(!VOICE_OFF) initVoice();
   window.claude?.use?.('downloads').then(d => { DL = d; }).catch(() => {});
   if(document.querySelector('link[rel="manifest"]') && 'serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
-  if(location.search.includes('rfdebug')) window.__rf = {scene, exportPts: () => pois.map(p => { const g = geoLocal([p.x, p.z]); const [lat, lng] = toLatLng(g[0], g[1]); return {id:p.id, name:p.name, name_hi:p.name_hi||'', cat:p.cat, catLabel:CATS[p.cat]?.label||p.cat, num:p.num||'', staff:!!p.staff, x:p.x, z:p.z, lat, lng}; }), goEye, setMode, eyeZoom, startWalk, standPoint, get walk(){ return walk; }, get eye(){ return eye; }, camera, controls, walker, get fly(){ return fly; }, set fly(v){ fly = v; }, DOORS, setWalkView, pose, live,
+  if(location.search.includes('rfdebug')) window.__rf = {scene, dumpData: () => ({info:INFO, kiosk:saved.kiosk, pois: pois.filter(p => !p.kiosk).map(p => { const q = {...p}; const [lat, lng] = latLngFromModel(p.x, p.z); q.lat = +lat.toFixed(7); q.lng = +lng.toFixed(7); delete q.x; delete q.z; return q; })}), exportPts: () => pois.map(p => { const g = geoLocal([p.x, p.z]); const [lat, lng] = toLatLng(g[0], g[1]); return {id:p.id, name:p.name, name_hi:p.name_hi||'', cat:p.cat, catLabel:CATS[p.cat]?.label||p.cat, num:p.num||'', staff:!!p.staff, x:p.x, z:p.z, lat, lng}; }), goEye, setMode, eyeZoom, startWalk, standPoint, get walk(){ return walk; }, get eye(){ return eye; }, camera, controls, walker, get fly(){ return fly; }, set fly(v){ fly = v; }, DOORS, setWalkView, pose, live,
     setLang, kioskReset, openStreet, closeStreet, openAdmin, renderExhibits, statsReport, get pois(){ return pois; }, get stops(){ return stops; }, KIOSK, visited, toLocal, toLatLng, setTab, WT, wtFindPath, wtGoHotspot, wtBuild, get mode(){ return mode; }};
 })();
 </script>
