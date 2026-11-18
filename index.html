@@ -2596,7 +2596,8 @@ function selectPoi(id, fly_=false){
   if(tab === 'manage'){ $('#mPick').value = id; fillForm(); return; }
   if(tab !== 'explore') setTab('explore');
   track('view', id);
-  const d = $('#detail'); d.textContent = ''; d.style.setProperty('--cat', `var(--c-${p.cat})`);
+  const d = $('#detail'); if(d.contains($('#planner'))) $('#tab-route').prepend($('#planner'));   // keep the directions block safe while the details are rebuilt
+  d.textContent = ''; d.style.setProperty('--cat', `var(--c-${p.cat})`);
   const back = document.createElement('button'); back.className='back'; back.type='button'; back.textContent = T('← All places');
   back.addEventListener('click', () => { d.hidden = true; $('#exploreList').hidden = false; selectedId = null; refreshPinStates(); });
   const cl = document.createElement('div'); cl.className='catline'; { const ic = document.createElement('i'); ic.innerHTML = iconSvg(iconKey(p)); cl.append(ic, document.createTextNode(ICON_NAMES[iconKey(p)] === CATS[p.cat]?.one ? T(CATS[p.cat]?.one) : `${T(ICON_NAMES[iconKey(p)])} · ${T(CATS[p.cat]?.one || p.cat)}`));
@@ -3949,6 +3950,10 @@ function hideAttract(lang){
   $('#attract').hidden = true; controls.autoRotate = false; lastAct = performance.now();
   setLang(lang || LANG); track('session');
   if(KIOSK.on) goAerial();   // back to north-up after the welcome screen's slow turn
+  if(KIOSK.on){   // open the side panel on the kiosk itself: its details and directions from "You are here" are ready to use
+    const h = kioskHere(); showPanel(); panel.classList.remove('collapsed');
+    if(h){ plannerFor = null; selectPoi(h, false); selectedId = null; refreshPinStates(); }   // no popup over the blinking You are here
+  }
   if(KIOSK.on && !document.fullscreenElement) document.documentElement.requestFullscreen?.().catch(() => {});
 }
 document.querySelectorAll('#attract [data-start]').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); hideAttract(b.dataset.start); }));
