@@ -334,16 +334,18 @@
    "name": "The Student Biennale",
    "name_hi": "छात्र द्विवार्षिकी",
    "cat": "biennale",
-   "lat": 28.6120485,
-   "lng": 77.2409319,
+   "lat": 28.612049,
+   "lng": 77.240932,
    "desc": "The Student Biennale: a platform for emerging voices, presented with Ardee Foundation.",
    "desc_hi": "द स्टूडेंट बिएनाले: उभरती आवाज़ों का मंच, आर्डी फ़ाउंडेशन के साथ।",
-   "note": "",
-   "note_hi": "",
+   "note": "Established in 1997 by the late Shri Ashok Varma, Ardee Foundation is now led by Shefali Varma, who also serves as an Advisor on the Board of the Kochi Biennale Foundation. \n\nUnder the leadership of Ms. Shefali Varma, Chairperson of the Ardee Group, the Ardee Foundation works as a living bridge between art and education, championing student creativity and cultural engagements. Through The Ardee Schools, the Foundation has developed a progressive model of art in education that encourages critical inquiry and meaningful cultural engagement. \nBy fostering this vital bridge between art and educat",
+   "note_hi": "स्वर्गीय श्री अशोक वर्मा द्वारा 1997 में स्थापित, 'अर्डी फाउंडेशन' (Ardee Foundation) का नेतृत्व अब शेफाली वर्मा कर रही हैं, जो 'कोच्चि बिएनाले फाउंडेशन' (Kochi Biennale Foundation) के बोर्ड में सलाहकार के रूप में भी कार्यरत हैं।\n\n'अर्डी ग्रुप' (Ardee Group) की चेयरपर्सन सुश्री शेफाली वर्मा के नेतृत्व में, अर्डी फाउंडेशन कला और शिक्षा के बीच एक जीवंत सेतु के रूप में काम करता है। यह छात्रों की रचनात्मकता और सांस्कृतिक गतिविधियों को बढ़ावा देता है। 'द अर्डी स्कूल्स' (The Ardee Schools) के माध्यम से, फाउंडेशन ने शिक्षा में कला का एक ऐसा प्रगतिशील मॉडल विकसित किया है, जो गहन चिंतन (critical inquir",
    "num": "12",
    "check": "Hidden from visitors on request (not needed on the map).",
    "staff": true,
-   "icon": "spark"
+   "icon": "spark",
+   "artist": "Students",
+   "photo": "/media/purana-qila/student-ardee-photo-mwm1rfx6.jpg"
   },
   {
    "id": "pav-states",
