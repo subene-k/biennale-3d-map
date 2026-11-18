@@ -305,7 +305,8 @@
    "featured": true,
    "icon": "spark",
    "artist": "Farrukhabad Or Murshidabad Artist With Kashmiri Scribes (Miniature Painting)",
-   "photo": "/media/purana-qila/dag-photo-mwm0wahe.jpg"
+   "photo": "/media/purana-qila/dag-photo-mwm0wahe.jpg",
+   "organiser": "DAG"
   },
   {
    "id": "pav-pk",
