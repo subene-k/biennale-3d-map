@@ -189,7 +189,8 @@
    "featured": true,
    "photo": "/media/purana-qila/swiss-photo-mwm14bja.jpg",
    "pano": "/media/purana-qila/swiss-pano-mwm165hd.jpg",
-   "icon": "spark"
+   "icon": "spark",
+   "artist": "Navid Tschopp"
   },
   {
    "id": "audi",
