@@ -207,6 +207,8 @@ body:has(#player:not([hidden])) #wtbar{display:none}
   .ld-logos{top:auto;bottom:calc(12px + env(safe-area-inset-bottom,0px));left:auto;right:16px;margin:0}
   .ld-card{bottom:calc(14px + env(safe-area-inset-bottom,0px));right:auto;max-width:56%}}
 @keyframes ldShake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+body.staffview .panel .brand{position:relative}
+body.staffview .panel .brand::after{content:'Staff view';position:absolute;top:8px;left:50%;transform:translateX(-50%);font:700 10px/1 var(--f-body);letter-spacing:.08em;text-transform:uppercase;background:#4C5B69;color:#fff;padding:4px 8px;border-radius:999px}
 body.ld-on .pin,body.ld-on .ctx,body.ld-on .topc,body.ld-on .ctl,body.ld-on .menu-btn,body.ld-on .osm-attr,body.ld-on .leftc{visibility:hidden}
 .ld-credit{position:absolute;z-index:2;right:12px;bottom:10px;font-size:11px;color:rgba(255,255,255,.85);text-decoration:none;text-shadow:0 1px 4px rgba(0,0,0,.6)}
 .landing.live{background:transparent}
@@ -560,8 +562,8 @@ body.kiosk .ext{display:none!important}
     </button>
     <div class="modes" role="radiogroup" aria-label="Map view">
       <button type="button" role="radio" aria-checked="false" data-mode="aerial" aria-label="Aerial view" title="Aerial view">Aerial</button>
-      <button type="button" role="radio" aria-checked="true" data-mode="map" aria-label="3D map" title="3D map">3D</button>
       <button type="button" role="radio" aria-checked="false" data-mode="eye" aria-label="360° view" title="360° view">360°</button>
+      <button type="button" role="radio" aria-checked="true" data-mode="map" aria-label="3D map" title="3D map">3D</button>
     </div>
     <div class="grp">
       <button id="zin" title="Zoom in" aria-label="Zoom in"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
@@ -1077,7 +1079,8 @@ const INFO_KEYS = {dates:'Dates', hours:'Opening hours', pass:'Biennale Pass', r
 let INFO = DEFAULT_INFO;
 /* Who sees what: staff-only points are visible in Manage only. */
 let editorMode = false;
-const shown = p => !!p && (!p.staff || editorMode);
+const STAFF_VIEW = (() => { try{ const q = new URLSearchParams(location.search); if(q.has('staff')) sessionStorage.setItem('bfm-staff', q.get('staff') === '0' ? '0' : '1'); return sessionStorage.getItem('bfm-staff') === '1'; }catch{ return false; } })();
+const shown = p => !!p && (!p.staff || editorMode || STAFF_VIEW);
 const visPois = () => pois.filter(shown);
 
 /* ================= scene ================= */
@@ -2212,7 +2215,7 @@ function rebuildPins(){
     const dot = document.createElement('div'); dot.className='dot'; dot.setAttribute('role','button'); dot.tabIndex = 0; dot.setAttribute('aria-label', pName(p) + (p.num ? ' · ' + T('Exhibit {n}', {n:p.num}) : ''));
     const num = document.createElement('span'); num.innerHTML = iconSvg(iconKey(p)); dot.appendChild(num);
     const nm = document.createElement('div'); nm.className='name'; nm.setAttribute('role','button'); nm.tabIndex = -1;
-    { const c = document.createElement('span'); c.className = 'nm-cat'; c.textContent = T(CATS[p.cat]?.one || '') + (p.num ? ' · ' + T('No. {n}', {n:p.num}) : '');
+    { const c = document.createElement('span'); c.className = 'nm-cat'; c.textContent = T(CATS[p.cat]?.one || '') + (p.num ? ' · ' + T('No. {n}', {n:p.num}) : '') + (p.staff ? ' · Staff only' : '');
       const t = document.createElement('span'); t.className = 'nm-t'; t.textContent = pName(p);
       const g = document.createElement('span'); g.className = 'nm-go'; g.textContent = T('View details') + ' ›';
       const ph = photoOf(p);
@@ -3932,7 +3935,7 @@ const KIOSK = (() => {
 })();
 function saveKiosk(){ try{ localStorage.setItem('bfm-kiosk', JSON.stringify(KIOSK)); }catch{} }
 function applyKiosk(){
-  document.body.classList.toggle('kiosk', !!KIOSK.on);
+  document.body.classList.toggle('kiosk', !!KIOSK.on); document.body.classList.toggle('staffview', STAFF_VIEW);
   $('#t-manage').hidden = !editorMode || !!KIOSK.on;
   if(KIOSK.on && tab === 'manage') setTab('explore');
   updateYou(); layout();
