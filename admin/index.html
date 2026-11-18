@@ -713,9 +713,11 @@ main{display:grid;grid-template-columns:300px minmax(0,1fr) 380px;height:calc(10
 .mk{width:22px;height:22px;border-radius:50%;border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4)}
 .mk.sel{width:30px;height:30px;box-shadow:0 0 0 4px rgba(22,89,199,.45),0 1px 6px rgba(0,0,0,.5)}
 [hidden]{display:none!important}
-#login,#saved{position:fixed;inset:0;background:rgba(27,23,20,.55);display:grid;place-items:center;z-index:2000;padding:16px}
+#login,#saved,#setup{position:fixed;inset:0;background:rgba(27,23,20,.55);display:grid;place-items:center;z-index:2000;padding:16px}
 #saved pre{background:#f4efe6;border-radius:8px;padding:10px 12px;font-size:13px;overflow:auto}
-#login .card,#saved .card{background:#fff;border-radius:14px;max-width:520px;width:100%;padding:22px;box-shadow:0 20px 50px rgba(0,0,0,.3)}
+#setup ol{margin:8px 0 12px;padding-left:20px;font-size:13.5px}
+#setup code{font-size:12px;background:#f4efe6;padding:1px 4px;border-radius:4px}
+#login .card,#saved .card,#setup .card{background:#fff;border-radius:14px;max-width:520px;width:100%;padding:22px;box-shadow:0 20px 50px rgba(0,0,0,.3)}
 #login h2{margin:0 0 6px}
 #login ol{margin:8px 0 12px;padding-left:20px;font-size:13.5px}
 .err{color:#b3261e;font-weight:600;margin-top:8px}
@@ -746,23 +748,39 @@ main{display:grid;grid-template-columns:300px minmax(0,1fr) 380px;height:calc(10
 <div id="login">
   <div class="card">
     <h2>Biennale Fort Maps · Admin</h2>
-    <p class="hint" style="margin-bottom:10px">Enter the passcode to edit the places on the map.</p>
-    <label for="tok">Passcode</label>
-    <input id="tok" type="password" autocomplete="off" spellcheck="false">
-    <div class="acts"><button class="btn pri" id="signin" type="button">Open</button></div>
+    <p class="hint" style="margin-bottom:10px">Enter the admin password to edit the places on the map.</p>
+    <label for="tok">Admin password</label>
+    <input id="tok" type="password" autocomplete="current-password" spellcheck="false">
+    <div class="acts"><button class="btn pri" id="signin" type="button">Open</button><button class="btn" id="toSetup" type="button">Set up live saving</button></div>
     <p class="err" id="lerr" hidden></p>
+  </div>
+</div>
+<div id="setup" hidden>
+  <div class="card">
+    <h2>Set up live saving</h2>
+    <p class="hint">Do this once (and again when the GitHub key expires). The key is locked with the admin password <b>in this browser</b> and stored locked in the repository as <code>admin/key.json</code>. Without the password it can’t be read.</p>
+    <ol>
+      <li>On GitHub: profile picture → <b>Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token</b>.</li>
+      <li>Repository access: <b>Only select repositories → biennale-3d-map</b>. Permissions: <b>Contents → Read and write</b>. Set an expiry date (for example the end of the event).</li>
+      <li>Copy the key and paste it below.</li>
+    </ol>
+    <label for="sKey">GitHub key</label><input id="sKey" type="password" autocomplete="off" spellcheck="false" placeholder="github_pat_…">
+    <div class="row"><div><label for="sPw">New admin password</label><input id="sPw" type="password" autocomplete="new-password"></div><div><label for="sPw2">Repeat password</label><input id="sPw2" type="password" autocomplete="new-password"></div></div>
+    <p class="hint">At least 12 characters, and different from the visitor passcode: anyone with this password can change the map.</p>
+    <div class="acts"><button class="btn pri" id="sGo" type="button">Lock and save</button><button class="btn" id="sBack" type="button">Back</button></div>
+    <p class="err" id="serr" hidden></p>
   </div>
 </div>
 <div id="saved" hidden>
   <div class="card">
     <h2>Saved</h2>
     <p id="savedWhere"></p>
-    <p>To put it live, run in your project folder:</p>
+    <div id="savedLocal"><p>To put it live, run in your project folder:</p>
     <pre>git pull --rebase origin main
 git add -A
 git commit -m "Update places"
-git push</pre>
-    <p class="hint">The live map shows the change about a minute after the push (reload it with Ctrl+F5).</p>
+git push</pre></div>
+    <p class="hint" id="savedHint">The live map shows the change about a minute after the push (reload it with Ctrl+F5).</p>
     <div class="acts"><button class="btn pri" id="savedOk" type="button">OK</button></div>
   </div>
 </div>
@@ -792,19 +810,72 @@ const $ = s => document.querySelector(s);
 const el = (tag, props={}, ...kids) => { const e = document.createElement(tag); for(const [k,v] of Object.entries(props)){ if(k === 'class') e.className = v; else if(k in e) e[k] = v; else e.setAttribute(k, v); } for(const k of kids) e.append(k); return e; };
 const toast = t => { const x = $('#toast'); x.textContent = t; x.hidden = false; clearTimeout(toast.h); toast.h = setTimeout(() => x.hidden = true, 4000); };
 
-/* ---- passcode (a soft lock: nothing goes live until you push) ---- */
-async function passOk(code){ try{ const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(PASS_SALT + code)); return [...new Uint8Array(d)].map(b => b.toString(16).padStart(2,'0')).join('') === PASS_HASH; }catch{ return false; } }
-async function signIn(code){
-  $('#lerr').hidden = true;
-  if(!(await passOk(code))){ const l = $('#lerr'); l.hidden = false; l.textContent = 'That passcode isn’t right.'; return; }
-  sessionStorage.setItem('bfm-admin', '1'); $('#login').hidden = true; $('#tok').value = '';
-  await loadVenue(venue);
+/* ---- live saving: the GitHub key is kept in admin/key.json, locked (AES-GCM) with a key derived from the admin password (PBKDF2, 600k rounds) ---- */
+const REPO = 'subene-k/biennale-3d-map', BRANCH = 'main', ITER = 600000;
+let token = null, live = false, sha = null;
+const enc = new TextEncoder(), b64 = u => btoa(String.fromCharCode(...new Uint8Array(u))), unb64 = t => Uint8Array.from(atob(t), c => c.charCodeAt(0));
+async function deriveKey(pw, salt, iter){ const base = await crypto.subtle.importKey('raw', enc.encode(pw), 'PBKDF2', false, ['deriveKey']); return crypto.subtle.deriveKey({name:'PBKDF2', hash:'SHA-256', salt, iterations:iter}, base, {name:'AES-GCM', length:256}, false, ['encrypt','decrypt']); }
+async function lockKey(tk, pw){ const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12)); const ct = await crypto.subtle.encrypt({name:'AES-GCM', iv}, await deriveKey(pw, salt, ITER), enc.encode(tk)); return {v:1, kdf:'PBKDF2-SHA256', iter:ITER, cipher:'AES-GCM', salt:b64(salt), iv:b64(iv), ct:b64(ct)}; }
+async function unlockKey(k, pw){ const pt = await crypto.subtle.decrypt({name:'AES-GCM', iv:unb64(k.iv)}, await deriveKey(pw, unb64(k.salt), k.iter), unb64(k.ct)); return new TextDecoder().decode(pt); }
+async function gh(path, opts={}, tk=token){   // the key is only ever sent to GitHub
+  const r = await fetch('https://api.github.com/repos/' + REPO + path, {...opts, cache:'no-store', headers:{'Accept':'application/vnd.github+json', 'Authorization':'Bearer ' + tk, 'X-GitHub-Api-Version':'2022-11-28', ...(opts.headers || {})}});
+  if(!r.ok){ const e = new Error('GitHub ' + r.status); e.status = r.status; try{ e.detail = (await r.json()).message; }catch{} throw e; }
+  return r.json();
 }
-function signOut(){ if(dirty && !confirm('You have unsaved changes. Lock and lose them?')) return; sessionStorage.removeItem('bfm-admin'); location.reload(); }
+const ghText = b => new TextDecoder().decode(unb64(b.replace(/\s/g, '')));
+const ghB64 = t => { const u = enc.encode(t); let bin = ''; for(let i = 0; i < u.length; i += 0x8000) bin += String.fromCharCode(...u.subarray(i, i + 0x8000)); return btoa(bin); };
+async function keyFile(){ try{ const r = await fetch('key.json', {cache:'no-store'}); return r.ok ? await r.json() : null; }catch{ return null; } }
 
-/* ---- reading and writing the place files ---- */
+/* ---- sign in ---- */
+async function passOk(code){ try{ const d = await crypto.subtle.digest('SHA-256', enc.encode(PASS_SALT + code)); return [...new Uint8Array(d)].map(b => b.toString(16).padStart(2,'0')).join('') === PASS_HASH; }catch{ return false; } }
+function lerr(t){ const l = $('#lerr'); l.textContent = t; l.hidden = !t; }
+async function signIn(pw){
+  lerr(''); $('#signin').disabled = true; $('#signin').textContent = 'Checking…';
+  try{
+    const k = await keyFile();
+    if(k){
+      let tk; try{ tk = await unlockKey(k, pw); }catch{ lerr('That password isn’t right.'); return; }
+      try{ const repo = await gh('', {}, tk); if(!repo.permissions?.push) throw Object.assign(new Error(), {status:403}); }
+      catch(e){ lerr(e.status === 401 ? 'The saved GitHub key has expired or was removed. Press “Set up live saving” to add a new one.' : e.status === 403 ? 'The saved GitHub key can’t write to the map. Set up live saving again with Contents: Read and write.' : 'Could not reach GitHub. Check the internet connection.'); return; }
+      token = tk; live = true;
+    }else{
+      if(!(await passOk(pw))){ lerr('That password isn’t right.'); return; }
+      live = false; toast('Live saving isn’t set up yet: Save will write to your project folder. Use “Set up live saving” to save straight to the site.');
+    }
+    enterApp();
+  }finally{ $('#signin').disabled = false; $('#signin').textContent = 'Open'; $('#tok').value = ''; }
+}
+function enterApp(){
+  $('#login').hidden = true; $('#setup').hidden = true;
+  $('#folder').hidden = live; $('#who').textContent = live ? 'Live saving to the site' : 'Saving to your folder';
+  $('#pub').textContent = live ? 'Save & publish' : 'Save';
+  loadVenue(venue);
+}
+function signOut(){ if(dirty && !confirm('You have unsaved changes. Lock and lose them?')) return; token = null; location.reload(); }
+async function doSetup(){
+  const se = t => { const e = $('#serr'); e.textContent = t; e.hidden = !t; }; se('');
+  const tk = $('#sKey').value.trim(), pw = $('#sPw').value, pw2 = $('#sPw2').value;
+  if(!/^(github_pat_|ghp_)\w{20,}$/.test(tk)){ se('That doesn’t look like a GitHub key (it starts with github_pat_).'); return; }
+  if(pw.length < 12){ se('Choose an admin password of at least 12 characters.'); return; }
+  if(pw !== pw2){ se('The two passwords are different.'); return; }
+  if(await passOk(pw)){ se('Use a different password from the visitor passcode.'); return; }
+  $('#sGo').disabled = true; $('#sGo').textContent = 'Saving…';
+  try{
+    const repo = await gh('', {}, tk); if(!repo.permissions?.push){ se('This key can’t write to ' + REPO + '. Give it Contents: Read and write.'); return; }
+    const locked = await lockKey(tk, pw);
+    let old = null; try{ old = (await gh('/contents/admin/key.json?ref=' + BRANCH, {}, tk)).sha; }catch(e){ if(e.status !== 404) throw e; }
+    await gh('/contents/admin/key.json', {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({message:'Admin: set up live saving (locked key)', content:ghB64(JSON.stringify(locked, null, 1) + '\n'), branch:BRANCH, ...(old ? {sha:old} : {})})}, tk);
+    token = tk; live = true; $('#sKey').value = $('#sPw').value = $('#sPw2').value = '';
+    toast('Live saving is set up. From now on, sign in with the new admin password.'); enterApp();
+  }catch(e){ se(e.status === 401 ? 'GitHub didn’t accept that key. Check it was copied completely and hasn’t expired.' : 'Could not save (' + (e.detail || e.status || 'network') + ').'); }
+  finally{ $('#sGo').disabled = false; $('#sGo').textContent = 'Lock and save'; }
+}
+
+/* ---- reading the place files ---- */
 async function dataDir(){ return dirH ? dirH.getDirectoryHandle('data', {create:true}) : null; }
 async function readFile(v){
+  if(live){ const f = await gh('/contents/data/' + VEN[v].file + '?ref=' + BRANCH).catch(e => { if(e.status === 404) return null; throw e; });
+    if(f){ sha = f.sha; return {d:JSON.parse(ghText(f.content)), from:'the site (GitHub)'}; } sha = null; }
   if(dirH){ try{ const f = await (await (await dataDir()).getFileHandle(VEN[v].file)).getFile(); return {d:JSON.parse(await f.text()), from:'your folder'}; }catch(e){ if(e.name !== 'NotFoundError') throw e; } }
   const r = await fetch('../data/' + VEN[v].file, {cache:'no-store'}); if(!r.ok) throw new Error('fetch ' + r.status);
   return {d:await r.json(), from:'the live site'};
@@ -813,7 +884,7 @@ async function loadVenue(v){
   let got; try{ got = await readFile(v); }
   catch{ toast(location.protocol === 'file:' ? 'Press “Open project folder” and choose the Biennale map folder to load the places.' : 'Could not load the places for ' + VEN[v].name + '.'); got = {d:{version:3, real:true, venue:v, pois:[]}, from:''}; }
   data = got.d; venue = v; selId = null; setDirty(false);
-  $('#who').textContent = got.from ? 'Loaded from ' + got.from : '';
+  if(!live) $('#who').textContent = got.from ? 'Loaded from ' + got.from + ' · saving to your folder' : '';
   document.querySelectorAll('.seg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === v)));
   drawAll(); renderForm(); fit();
 }
@@ -919,6 +990,16 @@ async function publish(){
   if(bad){ select(bad.id); toast('Each place needs a name, a category and a position.'); return; }
   data.real = true; data.venue = venue; data.version = 3; data.updated = new Date().toISOString().slice(0, 10);
   const text = JSON.stringify(data, null, 1) + '\n';
+  if(live){
+    $('#pub').disabled = true; $('#pub').textContent = 'Publishing…';
+    try{
+      const r = await gh('/contents/data/' + VEN[venue].file, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({message:'Update ' + VEN[venue].name + ' places (admin page)', content:ghB64(text), branch:BRANCH, ...(sha ? {sha} : {})})});
+      sha = r.content.sha; setDirty(false);
+      $('#savedWhere').textContent = 'Published to the site.'; $('#savedLocal').hidden = true; $('#savedHint').textContent = 'The live map shows the change in about a minute (reload it with Ctrl+F5).'; $('#saved').hidden = false;
+    }catch(e){ setDirty(true); toast(e.status === 409 || e.status === 422 ? 'Someone else saved these places meanwhile. Reload this page and redo your change.' : e.status === 401 ? 'The GitHub key has expired. Use “Set up live saving” again.' : 'Publishing failed (' + (e.detail || e.status || 'network') + ').'); }
+    finally{ $('#pub').textContent = 'Save & publish'; $('#pub').disabled = !dirty; }
+    return;
+  }
   if(!dirH && window.showDirectoryPicker && confirm('Save straight into your project folder? (Recommended.) Choose Cancel to download the file instead.')) await openFolderForSave();
   let where;
   try{
@@ -926,7 +1007,7 @@ async function publish(){
     else { const a = el('a', {href:URL.createObjectURL(new Blob([text], {type:'application/json'})), download:VEN[venue].file}); document.body.append(a); a.click(); a.remove();
       where = 'Downloaded ' + VEN[venue].file + '. Move it into the data folder of your project folder, replacing the old file.'; }
   }catch(e){ toast('Could not save (' + (e.message || e.name) + ').'); return; }
-  setDirty(false); $('#savedWhere').textContent = where; $('#saved').hidden = false;
+  setDirty(false); $('#savedWhere').textContent = where; $('#savedLocal').hidden = false; $('#savedHint').textContent = 'The live map shows the change about a minute after the push (reload it with Ctrl+F5).'; $('#saved').hidden = false;
 }
 async function openFolderForSave(){ try{ const h = await window.showDirectoryPicker({mode:'readwrite', id:'bfm-project'}); dirH = h; $('#folder').textContent = '📁 ' + h.name; }catch{} }
 
@@ -938,10 +1019,13 @@ $('#add').addEventListener('click', addPlace);
 $('#pub').addEventListener('click', publish);
 $('#folder').addEventListener('click', openFolder);
 $('#savedOk').addEventListener('click', () => { $('#saved').hidden = true; });
+$('#toSetup').addEventListener('click', () => { $('#login').hidden = true; $('#setup').hidden = false; setTimeout(() => $('#sKey').focus(), 50); });
+$('#sBack').addEventListener('click', () => { $('#setup').hidden = true; $('#login').hidden = false; });
+$('#sGo').addEventListener('click', doSetup);
 $('#q').addEventListener('input', renderList);
 document.querySelectorAll('.seg button').forEach(b => b.addEventListener('click', () => { if(b.dataset.v === venue || !data) return; if(dirty && !confirm('You have unsaved changes for ' + VEN[venue].name + '. Switch and lose them? (Press Save first to keep them.)')) return; loadVenue(b.dataset.v).catch(() => toast('Could not load ' + VEN[b.dataset.v].name + '.')); }));
 addEventListener('beforeunload', e => { if(dirty){ e.preventDefault(); e.returnValue = ''; } });
-if(sessionStorage.getItem('bfm-admin') === '1'){ $('#login').hidden = true; loadVenue(venue); } else setTimeout(() => $('#tok').focus(), 50);
+setTimeout(() => $('#tok').focus(), 50);   // the password is asked every time the page opens
 </script>
 </body>
 </html>
