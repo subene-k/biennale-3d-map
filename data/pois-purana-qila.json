@@ -270,8 +270,7 @@
   },
   {
    "id": "serendipity",
-   "name": "Serendipity",
-   "name_hi": "Serendipity",
+   "name_hi": "हकचांग—पोलंग",
    "cat": "biennale",
    "lat": 28.6104063,
    "lng": 77.2441367,
@@ -280,7 +279,8 @@
    "note": "",
    "note_hi": "",
    "num": "08",
-   "featured": true
+   "featured": true,
+   "name": "Hakchang—Polang"
   },
   {
    "id": "dag",
