@@ -285,17 +285,19 @@
   },
   {
    "id": "dag",
-   "name": "DAG",
-   "name_hi": "DAG",
+   "name": "Anant: A Rare 18th Century Mahabharata Scroll",
+   "name_hi": "Anant: A Rare 18th Century Mahabharata Scroll",
    "cat": "biennale",
    "lat": 28.6107578,
-   "lng": 77.2443864,
-   "desc": "Exhibit details to be added: title, artist and description.",
+   "lng": 77.244386,
+   "desc": "Presented for the first time at IAADB 2026, this extraordinary 72-metre eighteenth-century Mahabharata scroll, dated 1791, comprises 68 narrative miniatures. A rare synthesis of Sanskrit scholarship, calligraphy, painting and manuscript-making, it transforms the epic into a continuous visual journey, connecting contemporary audiences with India’s enduring literary and devotional traditions.",
    "desc_hi": "प्रदर्शनी का विवरण जोड़ा जाना है: शीर्षक, कलाकार और जानकारी।",
    "note": "",
    "note_hi": "",
    "num": "09",
-   "featured": true
+   "featured": true,
+   "icon": "spark",
+   "photo": "https://indiabiennale.culture.gov.in/booking-media/media-assets/catalog/items/89d95b02-bfc2-40b8-a10a-ebb6a13618ed.webp"
   },
   {
    "id": "pav-pk",
