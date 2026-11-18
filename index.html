@@ -627,14 +627,14 @@ body.kiosk .ext{display:none!important}
     </div>
     <button class="guide-tog" id="guideTog" type="button" aria-expanded="false">Explore places, exhibits &amp; directions</button>
     <nav class="tabs" role="tablist">
-      <button role="tab" id="t-explore" aria-selected="true" data-tab="explore">Explore</button>
+      <button role="tab" id="t-route" aria-selected="true" data-tab="route">Directions</button>
+      <button role="tab" id="t-explore" aria-selected="false" data-tab="explore">Explore</button>
       <button role="tab" id="t-exhibits" aria-selected="false" data-tab="exhibits">Exhibits</button>
-      <button role="tab" id="t-route" aria-selected="false" data-tab="route">Directions</button>
       <button role="tab" id="t-info" aria-selected="false" data-tab="info">Info</button>
       <button role="tab" id="t-manage" aria-selected="false" data-tab="manage" hidden>Manage</button>
     </nav>
 
-    <section class="body" id="tab-explore">
+    <section class="body" id="tab-explore" hidden>
       <div id="exploreList" style="display:flex;flex-direction:column;gap:12px">
         <input class="search" id="q" type="search" placeholder="Search places" aria-label="Search places">
         <div class="chips" id="chips"></div>
@@ -662,7 +662,7 @@ body.kiosk .ext{display:none!important}
 
     <section class="body info" id="tab-info" hidden><div id="infoBody" style="display:flex;flex-direction:column;gap:4px"></div></section>
 
-    <section class="body" id="tab-route" hidden>
+    <section class="body" id="tab-route">
       <div id="planner" class="planner">
       <div class="pl-route">
       <div class="stophead"><b>Directions</b><span class="hint" id="stopCount"></span></div>
@@ -920,7 +920,7 @@ const CATS = {
   gate:{label:'Gates', one:'Gate'}, monument:{label:'Palaces & monuments', one:'Monument'}, museum:{label:'Museums', one:'Museum'},
   garden:{label:'Gardens', one:'Garden'}, biennale:{label:'Biennale', one:'Biennale exhibit'}, facility:{label:'Visitor services', one:'Visitor service'}
 };
-const CAT_ORDER = ['gate','monument','museum','garden','biennale','facility'];
+const CAT_ORDER = ['biennale','gate','monument','museum','garden','facility'];
 const WALK_M_PER_MIN = 70;
 
 /* Hindi interface text, keyed by the English text. */
@@ -2519,7 +2519,7 @@ matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme
 new MutationObserver(applyTheme).observe(document.documentElement, {attributes:true, attributeFilter:['data-theme','class','style']});
 
 /* ================= panel UI ================= */
-let tab = 'explore';
+let tab = 'route';
 function setTab(t){
   tab = t;
   for(const b of document.querySelectorAll('.tabs button')) b.setAttribute('aria-selected', String(b.dataset.tab === t));
@@ -2712,15 +2712,12 @@ const ICONS = {
   skip:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5.5v13l9-6.5z"/><rect x="16" y="5.5" width="2.6" height="13" rx="1"/></svg>',
   follow:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3.5"/><path d="M12 2.5v4M12 17.5v4M2.5 12h4M17.5 12h4"/></svg>'
 };
-function defaultStops(){
-  stops = VENUE.defaultStops.filter(id => shown(byId(id)));
-  const h = kioskHere(); if(h){ stops = [h, ...stops.filter(id => id !== h)]; }
-  if(stops.length < 2) stops = visPois().slice(0,2).map(p => p.id);
+function defaultStops(){ const s0 = startId(); stops = [s0 || '', ''];   // start (the kiosk, or the entrance) and an empty destination
 }
-const kioskLock = () => kioskHere();   // a kiosk device always starts routes at the kiosk; that first stop can't be changed
+const kioskLock = () => kioskHere();   // on a kiosk, routes start at the kiosk by default (visitors can change it)
 function renderStops(){
   stops = stops.filter(id => id === '' || byId(id));
-  const kh = kioskLock(); if(kh && stops[0] !== kh) stops = [kh, ...stops.filter(id => id !== kh)];
+  const kh = null;   // the kiosk is only the starting suggestion; visitors may pick another start
   while(stops.length < 2) stops.push('');   // always at least a start and a destination
   const ol = $('#stops'); ol.textContent = '';
   stops.forEach((id,i) => {
@@ -2744,7 +2741,6 @@ function renderStops(){
     grip.addEventListener('pointerdown', e => startDrag(e, li));
     const k = document.createElement('span'); k.className = 'k'; k.textContent = i+1;
     const sel = document.createElement('select'); sel.id = 'stop-'+i; sel.setAttribute('aria-label', T('Stop {n}', {n:i+1})); poiOptions(sel, id);
-    if(kh) sel.querySelector(`option[value="${kh}"]`)?.remove();
     if(!id){ const o = new Option(T(i === 0 ? 'Choose where you start…' : 'Choose a place…'), ''); sel.prepend(o); sel.value = ''; sel.classList.add('empty'); }
     sel.addEventListener('change', () => {
       const dup = sel.value && stops.findIndex((x, j) => x === sel.value && j !== i);
@@ -3973,7 +3969,7 @@ function kioskReset(){
   clearRoute(); visited.clear(); saveVisited(); youAt = null;
   $('#q').value = ''; $('#xq').value = ''; xFilter = 'all'; catSel = null; zoomedIn = false; syncCats();
   selectedId = null; $('#detail').hidden = true; $('#exploreList').hidden = false; $('#toast').hidden = true;
-  defaultStops(); setLang('en'); renderChips(); renderList(); renderStops(); setTab('explore'); hideCard(); setCompact(true); goAerial(); showAttract();
+  defaultStops(); setLang('en'); renderChips(); renderList(); renderStops(); setTab('route'); hideCard(); setCompact(true); goAerial(); showAttract();
 }
 // staff dialog: long-press the logo for 2 seconds, or press Ctrl+Shift+K
 function openAdmin(){
