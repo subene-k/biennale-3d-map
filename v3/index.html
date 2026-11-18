@@ -91,6 +91,7 @@ button{cursor:pointer}
 .pin .name .nm-cat{display:block;font:700 10px/1.2 var(--f-body);letter-spacing:.06em;text-transform:uppercase;color:var(--cat);margin-bottom:3px}
 .pin .name .nm-go{display:none;margin-top:6px;font:600 11.5px/1 var(--f-body);color:var(--accent)}
 .pin .name.has-ph{width:236px;max-width:236px;padding:0 0 10px;overflow:hidden}
+.pin .name .nm-t{display:block}
 .pin .name.has-ph>.nm-cat,.pin .name.has-ph>.nm-t,.pin .name.has-ph>.nm-go{margin-left:12px;margin-right:12px}
 .pin .name.has-ph>.nm-cat{margin-top:9px}
 .pin .name .nm-ph{display:block;position:relative;height:132px;background:color-mix(in srgb,var(--cat) 18%,#eee);border-radius:7px 7px 0 0;overflow:hidden}
@@ -450,6 +451,7 @@ body:has(#player:not([hidden])) #placebar{display:none}
 .tick{width:16px;height:16px}
 .vis-badge{display:inline-flex;gap:5px;align-items:center;font-size:12px;font-weight:600;color:var(--ok);background:color-mix(in srgb,var(--ok) 14%,var(--panel));border-radius:999px;padding:3px 9px}
 .artist{font-size:13.5px;color:var(--muted);margin:-2px 0 0}
+.artist+.artist{margin-top:2px}
 .exnum{font:600 11px/1 var(--f-mono);letter-spacing:.06em;color:var(--c-biennale);background:color-mix(in srgb,var(--c-biennale) 12%,var(--panel));border-radius:6px;padding:4px 6px;margin-left:6px}
 .check-note{font-size:12px;color:var(--warn);margin-top:8px}
 .info h3{font:700 15px/1.2 var(--f-display);margin:12px 0 4px}
@@ -926,7 +928,7 @@ const CAT_ORDER = ['biennale','gate','monument','museum','garden','facility'];
 const WALK_M_PER_MIN = 70;
 
 /* Hindi interface text, keyed by the English text. */
-const HI = {'View details':'विवरण देखें', 'Walk in 2D':'2D में सैर', 'Walk in 3D':'3D में सैर', 'Choose a place…':'कोई जगह चुनें…', 'Choose where you start…':'शुरुआत की जगह चुनें…', 'Add a stop':'पड़ाव जोड़ें', 'Watch the walk from above':'ऊपर से सैर देखें', 'Walk behind the guide at ground level':'ज़मीन पर गाइड के पीछे चलें', 'Photo':'फ़ोटो', 
+const HI = {'View details':'विवरण देखें', 'Curator: {a}':'क्यूरेटर: {a}', 'Organiser: {a}':'आयोजक: {a}', 'Walk in 2D':'2D में सैर', 'Walk in 3D':'3D में सैर', 'Choose a place…':'कोई जगह चुनें…', 'Choose where you start…':'शुरुआत की जगह चुनें…', 'Add a stop':'पड़ाव जोड़ें', 'Watch the walk from above':'ऊपर से सैर देखें', 'Walk behind the guide at ground level':'ज़मीन पर गाइड के पीछे चलें', 'Photo':'फ़ोटो', 
   'Explore places, exhibits & directions':'स्थान, प्रदर्शनियाँ और रास्ते देखें', 'Hide list':'सूची छिपाएँ', 'More details':'पूरी जानकारी', 'Close':'बंद करें',
   // categories and map symbols
   'Gates':'द्वार', 'Gate':'द्वार', 'Palaces & monuments':'महल और स्मारक', 'Monument':'स्मारक', 'Museums':'संग्रहालय', 'Museum':'संग्रहालय',
@@ -2588,7 +2590,7 @@ function renderList(){
   }
   if(!list.children.length){ const p = document.createElement('p'); p.className='hint'; p.textContent = T('No places match. Clear the search or turn a category back on.'); list.appendChild(p); }
 }
-const searchText = p => [p.name, p.name_hi, p.desc, p.desc_hi, p.note, p.note_hi, p.artist, p.num, T(ICON_NAMES[iconKey(p)]), ICON_NAMES[iconKey(p)]].filter(Boolean).join(' ').toLowerCase();
+const searchText = p => [p.name, p.name_hi, p.desc, p.desc_hi, p.note, p.note_hi, p.artist, p.curator, p.organiser, p.num, T(ICON_NAMES[iconKey(p)]), ICON_NAMES[iconKey(p)]].filter(Boolean).join(' ').toLowerCase();
 let searchT;
 $('#q').addEventListener('input', () => { renderList(); clearTimeout(searchT); searchT = setTimeout(() => { if($('#q').value.trim()) track('search', null, {hits:$('#list').querySelectorAll('.item').length}); }, 1500); });
 
@@ -2609,6 +2611,7 @@ function selectPoi(id, fly_=false){
   const h = document.createElement('h2'); h.textContent = pName(p);
   d.append(back, cl, h);
   if(p.artist){ const a = document.createElement('p'); a.className = 'artist'; a.textContent = T('Artist: {a}', {a:p.artist}); d.appendChild(a); }
+  for(const [k, lab] of [['curator','Curator: {a}'], ['organiser','Organiser: {a}']]) if(pf(p, k)){ const a = document.createElement('p'); a.className = 'artist'; a.textContent = T(lab, {a:pf(p, k)}); d.appendChild(a); }
   const desc = document.createElement('p'); desc.textContent = pf(p,'desc'); d.appendChild(desc);
   { const ph = photoOf(p); if(ph){ const im = document.createElement('img'); im.className = 'photo'; im.alt = pName(p); im.loading = 'lazy'; im.src = ph.d || ph.u; d.insertBefore(im, cl);
       let cr = null; if(ph.a){ cr = document.createElement('a'); cr.className = 'ph-credit'; cr.href = 'https://commons.wikimedia.org/wiki/File:' + ph.f; cr.target = '_blank'; cr.rel = 'noopener'; cr.textContent = photoCredit(ph); d.insertBefore(cr, cl); }

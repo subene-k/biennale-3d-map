@@ -967,6 +967,7 @@ function renderForm(){
   f.append(el('div', {class:'row'}, field('Name (English)', 'name'), field('Name (Hindi)', 'name_hi')));
   f.append(el('div', {class:'row'}, field('Category', 'cat', 'select', CATS), field('Map icon', 'icon', 'select', ICONS)));
   f.append(el('div', {class:'row'}, field('Exhibit no.', 'num'), field('Artist', 'artist')));
+  f.append(el('div', {class:'row'}, field('Curator', 'curator'), field('Organiser', 'organiser')));
   f.append(el('div', {class:'row one'}, field('Description (English)', 'desc', 'area')));
   f.append(el('div', {class:'row one'}, field('Description (Hindi)', 'desc_hi', 'area')));
   f.append(el('div', {class:'row one'}, field('“At the Biennale” note (English)', 'note', 'area')));
@@ -993,7 +994,13 @@ function mediaBlock(p, key, title, help){
   up.addEventListener('click', () => inp.click());
   inp.addEventListener('change', () => { const f = inp.files[0]; inp.value = ''; if(f) uploadMedia(p, key, f, up); });
   rm.addEventListener('click', () => { delete p[key]; setDirty(true); renderForm(); toast(title + ' removed. Press Save to apply.'); });
-  const acts = el('div', {class:'acts'}, up); if(cur) acts.append(rm); box.append(acts, el('p', {class:'hint', textContent:help}));
+  const acts = el('div', {class:'acts'}, up); if(cur) acts.append(rm); box.append(acts);
+  const link = el('input', {type:'url', placeholder:'…or paste an image link (https://…)', 'aria-label':title + ' link'}); link.style.marginTop = '8px';
+  if(cur && /^https?:/i.test(cur)) link.value = cur;
+  link.addEventListener('change', () => { const v = link.value.trim(); if(!v) return;
+    if(!/^https:\/\/[^\s"'<>]+$/i.test(v)){ toast('The link must start with https:// (a direct link to the image).'); link.value = ''; return; }
+    p[key] = v; setDirty(true); renderForm(); toast(title + ' link added. Press ' + (live ? '“Save & publish”' : '“Save”') + ' to show it on the map.'); });
+  box.append(link, el('p', {class:'hint', textContent:help + ' The link must open the image itself (ending in .jpg, .png or .webp), and the site must allow other pages to show it.'}));
   return box;
 }
 async function shrink(file, key){
