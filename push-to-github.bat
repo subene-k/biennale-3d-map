@@ -1,14 +1,34 @@
 @echo off
-rem Pushes this folder to https://github.com/subene-k/biennale-3d-map (run once; run again after later changes)
+rem Publishes the project folder to GitHub (https://isotoxal-karma.stratagile.com/).
+rem Always: save your changes, take in the admin page's changes from GitHub, then push.
 cd /d "%~dp0"
-git --version >nul 2>&1 || (echo Git is not installed. Get it from https://git-scm.com/download/win and run this again. & pause & exit /b 1)
-if not exist .git git init
-git checkout -B main
+set "MSG=%*"
+if "%MSG%"=="" set /p "MSG=Short note about this change (Enter for 'Update'): "
+if "%MSG%"=="" set "MSG=Update"
+
 git add -A
-git commit -m "Biennale 3D maps: Purana Qila and Red Fort" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>" || echo Nothing new to commit.
-git remote remove origin >nul 2>&1
-git remote add origin https://github.com/subene-k/biennale-3d-map.git
-git push -u origin main
+git diff --cached --quiet || git commit -m "%MSG%"
+
 echo.
-echo Done. If a GitHub sign-in window opened, sign in as subene-k and the push continues.
+echo Getting the latest changes from GitHub (admin page edits)...
+git pull --rebase origin main
+if errorlevel 1 (
+  echo.
+  echo *** The pull stopped because the same file was changed here and in the admin page.
+  echo *** Nothing was pushed. Copy this window's text to Claude, or run:  git rebase --abort
+  pause
+  exit /b 1
+)
+
+echo.
+echo Publishing...
+git push origin main
+if errorlevel 1 (
+  echo.
+  echo *** Push failed. Copy this window's text to Claude.
+  pause
+  exit /b 1
+)
+echo.
+echo Done. The live map updates in about a minute (reload with Ctrl+F5).
 pause
