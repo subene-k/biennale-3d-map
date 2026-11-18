@@ -59,7 +59,8 @@
    "desc": "The main western gateway in red sandstone, flanked by massive bastions and topped with domed kiosks. It faces the southern end of the lake.",
    "desc_hi": "लाल बलुआ पत्थर का मुख्य पश्चिमी द्वार, विशाल बुर्जों से घिरा और गुंबददार छतरियों से सजा। यह झील के दक्षिणी छोर की ओर खुलता है।",
    "note": "",
-   "note_hi": ""
+   "note_hi": "",
+   "staff": true
   },
   {
    "id": "humayun",
