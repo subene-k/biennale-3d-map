@@ -272,16 +272,16 @@
    "id": "serendipity",
    "name_hi": "हकचांग—पोलंग",
    "cat": "biennale",
-   "lat": 28.6104063,
-   "lng": 77.2441367,
-   "desc": "Exhibit details to be added: title, artist and description.",
-   "desc_hi": "प्रदर्शनी का विवरण जोड़ा जाना है: शीर्षक, कलाकार और जानकारी।",
-   "note": "",
-   "note_hi": "",
+   "lat": 28.610406,
+   "lng": 77.244137,
+   "note": "Commissioned by Serendipity Arts, the Charpai Project celebrates sustainable design and the Indian spirit of jugaad. Featuring hand-woven panels crafted by traditional artisans from recycled food wrappers and ropes, alongside upcycled Tetra Pak panels mounted on scaffolding, the installation transforms urban waste into art and utility through traditional craft and material innovation.",
+   "note_hi": "सेरेन्डिपिटी आर्ट्स द्वारा शुरू किया गया 'चारपाई प्रोजेक्ट', टिकाऊ डिज़ाइन और भारतीय 'जुगाड़' की भावना का जश्न मनाता है। इसमें पारंपरिक कारीगरों द्वारा रीसाइकल किए गए खाने के रैपर और रस्सियों से बुने गए पैनल शामिल हैं। इसके साथ ही, मचान (स्कैफोल्डिंग) पर टेट्रा पैक से बने पैनल भी लगाए गए हैं। यह इंस्टॉलेशन पारंपरिक शिल्प और नई सामग्रियों के इस्तेमाल के ज़रिए शहरी कचरे को कला और उपयोगी चीज़ों में बदल देता है।",
    "num": "08",
    "featured": true,
    "name": "Hakchang—Polang",
-   "artist": "Ayush Kasliwal and Ramayudh (Charpai Project)  Surjit Nongmeikapam (Director, Hakchang Polang, Performance)"
+   "artist": "Ayush Kasliwal and Ramayudh (Charpai Project)  Surjit Nongmeikapam (Director, Hakchang Polang, Performance)",
+   "desc": "Commissioned by Serendipity Arts, the Charpai Project celebrates sustainable design and the Indian spirit of jugaad. Featuring hand-woven panels crafted by traditional artisans from recycled food wrappers and ropes, alongside upcycled Tetra Pak panels mounted on scaffolding, the installation transforms urban waste into art and utility through traditional craft and material innovation.",
+   "photo": "/media/purana-qila/serendipity-photo-mwm1m8v0.jpg"
   },
   {
    "id": "dag",
