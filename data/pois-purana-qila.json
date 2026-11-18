@@ -331,8 +331,8 @@
   },
   {
    "id": "student-ardee",
-   "name": "The Student Biennale (Ardee)",
-   "name_hi": "The Student Biennale (Ardee)",
+   "name": "The Student Biennale",
+   "name_hi": "छात्र द्विवार्षिकी",
    "cat": "biennale",
    "lat": 28.6120485,
    "lng": 77.2409319,
@@ -342,7 +342,8 @@
    "note_hi": "",
    "num": "12",
    "check": "Hidden from visitors on request (not needed on the map).",
-   "staff": true
+   "staff": true,
+   "icon": "spark"
   },
   {
    "id": "pav-states",
