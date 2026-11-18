@@ -3093,7 +3093,7 @@ const speakPlace = p => speakNow(placeText(p, speakLang()), speakLang(), placeTe
 function speakStop(i){
   const tok = ++walk.token;
   walk.state = 'speaking'; walk.t0 = performance.now(); walk.speechDone = false; walk.spoken = false;
-  walk.readMs = Math.min(10000, Math.max(3500, 1800 + stopText(i).length*45));   // time to read the text when silent
+  walk.readMs = VOICE_OFF ? (i === 0 ? 300 : 900) : Math.min(10000, Math.max(3500, 1800 + stopText(i).length*45));   // short pause at each stop; its text stays on screen
   let pr; try{ pr = speakNow(stopText(i, speakLang()), speakLang(), stopText(i, 'en')); }catch{ pr = Promise.resolve(false); }
   pr.then(sp => { if(tok !== walk.token) return; walk.speechDone = true; walk.spoken = sp; walk.doneAt = performance.now(); },
           () => { if(tok !== walk.token) return; walk.speechDone = true; walk.doneAt = performance.now(); });
@@ -3405,17 +3405,23 @@ function setMode(m){
 /* Aerial view: high above the fort, north up, the whole walled site and its surroundings in frame. "3D map" returns to the usual opening view. */
 const modeBtns = m => document.querySelectorAll('.modes button').forEach(b => b.setAttribute('aria-checked', String(b.dataset.mode === m)));
 function aerialView(){
-  let P = VENUE.poly || [[0,0]]; const cx = P.reduce((s,q) => s+q[0], 0)/P.length, cz = P.reduce((s,q) => s+q[1], 0)/P.length;
+  let P = VENUE.poly || [[0,0]], cx = P.reduce((s,q) => s+q[0], 0)/P.length, cz = P.reduce((s,q) => s+q[1], 0)/P.length;
   { const h = kioskHere() && byId(kioskHere()); if(h) P = [...P, [h.x + 30, h.z + 30], [h.x - 30, h.z - 30]]; }   // keep the kiosk's You are here in frame
   const a = mapEl.clientWidth / Math.max(1, mapEl.clientHeight), th = Math.tan(THREE.MathUtils.degToRad(camera.fov/2)), pol = .2;   // a slight tilt keeps walls and buildings readable as 3D
   // screen-up direction: north on wide screens; along the fort's length on tall (portrait) screens so it fills the phone
   let up = new THREE.Vector2(0, -1);
   if(a < .85){ let sxx = 0, szz = 0, sxz = 0; for(const [x,z] of P){ sxx += (x-cx)**2; szz += (z-cz)**2; sxz += (x-cx)*(z-cz); }
     const ang = .5*Math.atan2(2*sxz, sxx - szz); up.set(Math.cos(ang), Math.sin(ang)); if(up.y > 0) up.negate(); }
-  const side = new THREE.Vector2(-up.y, up.x); let hu = 0, hs = 0;
-  for(const [x,z] of P){ const dx = x-cx, dz = z-cz; hu = Math.max(hu, Math.abs(dx*up.x + dz*up.y)); hs = Math.max(hs, Math.abs(dx*side.x + dz*side.y)); }
-  const m = a < .85 ? 1.5 : 1.35, D = Math.min(2600, Math.max(hu*m/th, hs*m/(th*a)));
-  return {pos:new THREE.Vector3(cx - up.x*Math.sin(pol)*D, Math.cos(pol)*D, cz - up.y*Math.sin(pol)*D), target:new THREE.Vector3(cx, 0, cz)};
+  const side = new THREE.Vector2(-up.y, up.x); let u0 = 1e9, u1 = -1e9, s0 = 1e9, s1 = -1e9;
+  for(const [x,z] of P){ const dx = x-cx, dz = z-cz, u = dx*up.x + dz*up.y, w = dx*side.x + dz*side.y; u0 = Math.min(u0, u); u1 = Math.max(u1, u); s0 = Math.min(s0, w); s1 = Math.max(s1, w); }
+  const hu = (u1 - u0)/2, hs = (s1 - s0)/2, mu = (u0 + u1)/2, ms = (s0 + s1)/2;   // frame the outline's extent, not the average of its corners
+  cx += up.x*mu + side.x*ms; cz += up.y*mu + side.y*ms;
+  // with the side panel open on a wide screen, fit the fort into the map area to the right of the panel
+  const W = mapEl.clientWidth, H = Math.max(1, mapEl.clientHeight), pr = (!panel.classList.contains('off') && W >= 760) ? Math.min(W*.5, panel.getBoundingClientRect().right + 16) : 0;
+  const aw = W - pr - 60, tight = pr > 0;
+  const m = a < .85 ? 1.5 : tight ? 1.06 : 1.35, D = Math.min(2600, Math.max(hu*m/th, hs*m/(th*aw/H)));
+  const tx = cx, tz = cz;   // layout() already centres the view in the area beside the panel
+  return {pos:new THREE.Vector3(tx - up.x*Math.sin(pol)*D, Math.cos(pol)*D, tz - up.y*Math.sin(pol)*D), target:new THREE.Vector3(tx, 0, tz)};
 }
 function goAerial(instant){
   closeStreet(); if(mode === 'eye') setMode('map');
@@ -3948,9 +3954,8 @@ function showAttract(){
 function hideAttract(lang){
   $('#attract').hidden = true; controls.autoRotate = false; lastAct = performance.now();
   setLang(lang || LANG); track('session');
-  if(KIOSK.on) goAerial();   // back to north-up after the welcome screen's slow turn
   if(KIOSK.on){   // open the side panel on the kiosk itself: its details and directions from "You are here" are ready to use
-    const h = kioskHere(); showPanel(); panel.classList.remove('collapsed');
+    const h = kioskHere(); showPanel(); panel.classList.remove('collapsed'); goAerial();   // north-up, fort framed beside the open panel
     if(h){ plannerFor = null; selectPoi(h, false); selectedId = null; refreshPinStates(); }   // no popup over the blinking You are here
   }
   if(KIOSK.on && !document.fullscreenElement) document.documentElement.requestFullscreen?.().catch(() => {});
