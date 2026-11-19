@@ -217,7 +217,8 @@
    "note_hi": "",
    "icon": "event",
    "num": "03",
-   "featured": true
+   "featured": true,
+   "photo": "https://indiabiennale.culture.gov.in/assets/images/venues/no_image.png"
   },
   {
    "id": "rmz",
