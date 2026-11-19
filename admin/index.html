@@ -727,6 +727,7 @@ main{display:grid;grid-template-columns:300px minmax(0,1fr) 380px;height:calc(10
 .err{color:#b3261e;font-weight:600;margin-top:8px}
 #toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#1b1714;color:#fff;padding:10px 16px;border-radius:10px;z-index:3000;max-width:90%;font-weight:500}
 @media (max-width:1000px){main{grid-template-columns:1fr;grid-template-rows:240px 320px auto;height:auto}.list{border-right:0}#map{height:320px}.form{border-left:0}}
+label.chk{display:flex;gap:8px;align-items:flex-start;font-weight:500;cursor:pointer}label.chk input{width:auto;margin-top:3px}
 </style>
 </head>
 <body>
@@ -738,6 +739,7 @@ main{display:grid;grid-template-columns:300px minmax(0,1fr) 380px;height:calc(10
   <span class="hint" id="who"></span>
   <button class="btn" id="folder" type="button">Open project folder</button>
   <button class="btn pri" id="pub" type="button" disabled>Save</button>
+  <button class="btn" id="kset" type="button" title="Kiosk settings: reset time and welcome screen">Kiosks</button>
   <a class="btn" href="../" target="_blank" rel="noopener">Open map ↗</a>
   <button class="btn" id="out" type="button">Lock</button>
 </header>
@@ -943,11 +945,29 @@ function renderList(){
 /* ---- form ---- */
 const cur = () => data?.pois.find(p => p.id === selId);
 function select(id){ selId = id; drawAll(); renderForm(); }
+$('#kset').addEventListener('click', () => { if(!data) return; select('__kiosk'); });
 function setPos(p, lat, lng){
   const c = VEN[venue].center; if(Math.abs(lat - c[0]) > .03 || Math.abs(lng - c[1]) > .03){ toast('That is far from ' + VEN[venue].name + '. Check the position.'); return; }
   p.lat = +lat.toFixed(7); p.lng = +lng.toFixed(7); setDirty(true); drawAll(); renderForm();
 }
+function renderKioskForm(){   // kiosk settings for this venue (saved in the venue's data file, used by every kiosk)
+  const f = $('#form'); f.textContent = ''; data.kiosk ||= {};
+  const k = data.kiosk, cur = +k.idleSeconds || 120;
+  const sel = el('select', {id:'k_idle'});
+  for(const [v, t] of [[60,'1 minute'],[90,'1.5 minutes'],[120,'2 minutes'],[180,'3 minutes'],[300,'5 minutes'],[600,'10 minutes']]) sel.append(el('option', {value:String(v), textContent:t}));
+  if(![60,90,120,180,300,600].includes(cur)) sel.append(el('option', {value:String(cur), textContent:cur + ' seconds'}));
+  sel.value = String(cur);
+  sel.addEventListener('change', () => { k.idleSeconds = +sel.value; setDirty(true); });
+  const wl = el('input', {type:'checkbox', id:'k_welcome'}); wl.checked = !!k.welcome;
+  wl.addEventListener('change', () => { if(wl.checked) k.welcome = true; else delete k.welcome; setDirty(true); });
+  f.append(el('h2', {textContent:'Kiosk settings · ' + VEN[venue].name}),
+    el('p', {class:'hint', textContent:'These apply to every kiosk at this venue. Press “' + $('#pub').textContent + '” to send them to the kiosks; they pick them up the next time they load the map.'}),
+    el('div', {class:'row one'}, el('div', {}, el('label', {htmlFor:'k_idle', textContent:'Go back to the main screen (“You are here”) after no touch for'}), sel)),
+    el('div', {class:'row one'}, el('label', {class:'chk'}, wl, document.createTextNode(' Show the welcome screen (Touch to start) after a reset, instead of the map'))),
+    el('p', {class:'hint', textContent:'A “Still exploring?” message shows first, and the reset follows 15 seconds later. A guided walk that is running counts as activity. Used from map version v5.'}));
+}
 function renderForm(){
+  if(selId === '__kiosk'){ renderKioskForm(); return; }
   const f = $('#form'), p = cur(); f.textContent = '';
   if(!p){ f.append(el('p', {class:'empty', textContent:'Choose a place from the list or the map, or press “+ Add”.'})); return; }
   const field = (lab, key, type='text', opts) => {

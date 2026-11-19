@@ -31,7 +31,7 @@
  },
  "kiosk": {
   "pin": "2026",
-  "idleSeconds": 90,
+  "idleSeconds": 120,
   "here": "entry",
   "analyticsUrl": ""
  },
